@@ -15,7 +15,7 @@ export default function CreateRetailerForm() {
     setMessage("");
 
     try {
-      const res = await fetch("http://localhost:5000/api/create-retailer", {
+      const res = await fetch("https://shobha-silver.vercel.app/api/create-retailer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

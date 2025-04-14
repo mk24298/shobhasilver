@@ -9,7 +9,7 @@ const ItemAnalytics = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/getretailerbills');
+      const response = await fetch('https://shobha-silver.vercel.app/api/getretailerbills');
       const allBills = await response.json();
 
       const filteredBills = allBills.retailers.flatMap(b =>

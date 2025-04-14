@@ -52,7 +52,7 @@ router.post("/create-bill", async (req, res) => {
     const lastBillId = latestBill?.billId || (retailerId * 10); // starts like 50, 60, etc.
     const newBillId = lastBillId + 1;
 
-    // 2. Subtract stock2332
+    // 2. Subtract stock
     for (const item of bill.items) {
       const stockId = item._id;
       const stock = await Stock.findOne({ _id: new mongoose.Types.ObjectId(stockId) });

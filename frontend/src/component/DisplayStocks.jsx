@@ -6,7 +6,7 @@ export default function DisplayStocks() {
   const [showAnalytics, setShowAnalytics] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/getstocks")
+    fetch("https://shobha-silver.vercel.app/api/getstocks")
       .then(res => res.json())
       .then(data => setStocks(data))
       .catch(err => console.error("Error fetching stocks:", err));

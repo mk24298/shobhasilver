@@ -23,7 +23,7 @@ export default function AddStockForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await fetch("http://localhost:5000/api/addstock", {
+    const res = await fetch("https://shobha-silver.vercel.app/api/addstock", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form)

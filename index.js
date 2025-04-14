@@ -15,26 +15,44 @@ app.use(express.json());
 // Connect to MongoDB
 mongodb();
 
-// API routes
+// // API routes
+// app.use("/api", require("./routes/createBill"));
+// app.use("/api", require("./routes/getRetailers"));
+// app.use("/api", require("./routes/addStock"));
+// app.use("/api", require("./routes/getStock"));
+// app.use("/api", require("./routes/getBills"));
+
+
+// All /api routes
 app.use("/api", require("./routes/createBill"));
 app.use("/api", require("./routes/getRetailers"));
 app.use("/api", require("./routes/addStock"));
 app.use("/api", require("./routes/getStock"));
 app.use("/api", require("./routes/getBills"));
 
-
-
-
-
-
-// Serve frontend build files
+// Serve static files
 app.use(express.static(path.join(__dirname, "frontend", "build")));
-console.log(path.join(__dirname, "frontend", "build", "index.html"),"sdcs")
 
-// app.get("*", (req, res) => {
-//   res.sendFile(path.join(__dirname, "frontend", "build", "index.html"));
-// });
+// Fallback route for SPA
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "build", "index.html"));
+});
 
+
+
+
+// // Serve frontend build files
+// app.use(express.static(path.join(__dirname, "frontend", "build")));
+// console.log(path.join(__dirname, "frontend", "build", "index.html"),"sdcs")
+
+
+// const currentDir = __dirname;
+// console.log("Current Directory:", currentDir);
+// app.use(express.static(path.join(__dirname, "/frontend/build")));
+
+// app.get("*", (req, res) =>
+//   res.sendFile(path.join(__dirname, "./frontend/build/index.html"))
+// );
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

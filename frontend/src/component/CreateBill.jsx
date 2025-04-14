@@ -63,11 +63,11 @@ const CreateBill = () => {
 
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/getretailers")
+    fetch("https://shobha-silver.vercel.app/api/getretailers")
       .then((res) => res.json())
       .then((data) => setRetailers(data));
 
-    fetch("http://localhost:5000/api/getstocks")
+    fetch("https://shobha-silver.vercel.app/api/getstocks")
       .then((res) => res.json())
       .then((data) => setStocks(data));
   }, []);
@@ -165,7 +165,7 @@ const CreateBill = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/create-bill", {
+      const response = await fetch("https://shobha-silver.vercel.app/api/create-bill", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
