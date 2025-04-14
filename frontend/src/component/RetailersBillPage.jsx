@@ -9,13 +9,13 @@ const RetailerBillsPage = () => {
     const [totalRemaining, setTotalRemaining] = useState(0);
 
     useEffect(() => {
-        fetch('https://shobha-silver.vercel.app/api/getretailers')
+        fetch('https://shobhasilver.onrender.com/api/getretailers')
             .then((res) => res.json())
             .then((data) => setRetailers(data));
     }, []);
 
     const fetchBills = async () => {
-        const response = await fetch('https://shobha-silver.vercel.app/api/getretailerbills', {
+        const response = await fetch('https://shobhasilver.onrender.com/api/getretailerbills', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: selectedRetailerName }) // use name instead of id

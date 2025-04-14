@@ -63,11 +63,11 @@ const CreateBill = () => {
 
 
   useEffect(() => {
-    fetch("https://shobha-silver.vercel.app/api/getretailers")
+    fetch("https://shobhasilver.onrender.com/api/getretailers")
       .then((res) => res.json())
       .then((data) => setRetailers(data));
 
-    fetch("https://shobha-silver.vercel.app/api/getstocks")
+    fetch("https://shobhasilver.onrender.com/api/getstocks")
       .then((res) => res.json())
       .then((data) => setStocks(data));
   }, []);
@@ -165,7 +165,7 @@ const CreateBill = () => {
     };
 
     try {
-      const response = await fetch("https://shobha-silver.vercel.app/api/create-bill", {
+      const response = await fetch("https://shobhasilver.onrender.com/api/create-bill", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
