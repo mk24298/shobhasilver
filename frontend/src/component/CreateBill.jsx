@@ -17,7 +17,7 @@ const CreateBill = () => {
   const [kachi, setKachi] = useState({ kachiwt: 0, kachiTunch: 0, kachiFine: 0 });
   const [fine, setFine] = useState(0);
   const [received, setReceived] = useState(0);
-  const [billAdded, setBillAdded] = useState(true);
+  // const [billAdded, setBillAdded] = useState(true);
   const [submit, setSubmit] = useState(false);
 
   const componentRef = useRef();
@@ -136,9 +136,9 @@ const CreateBill = () => {
   const [billId, setBillId] = useState(0);
 
   // Generate Bill ID only once when the user is about to submit
-  const generateBillId = () => {
-    return Math.floor(100 + Math.random() * 900); // 3-digit random number
-  };
+  // const generateBillId = () => {
+  //   return Math.floor(100 + Math.random() * 900); // 3-digit random number
+  // };
 
   // useEffect(() => {
   //   if (billId === null) {
@@ -182,7 +182,7 @@ const CreateBill = () => {
         alert(`Bill added successfully! Bill ID: ${data.billId}`);
         setBillId(data.billId); // 🟢 Set the returned billId
         setSubmit(false);
-        setBillAdded(false);
+        // setBillAdded(false);
         setIsBillReady(true);
         console.log("Added bill:", data);
       } else {
