@@ -57,11 +57,35 @@ const BillToPrint = forwardRef(({ selectedRetailer, date, rate, items, totals, k
 
       </div>
 
-      <div className="kacchidiv my-3">
+      {/* <div className="kacchidiv my-3">
         <p>Kacchi Wt: {kachi.kachiwt}</p>
         <p>Kacchi Tunch: {kachi.kachiTunch}</p>
         <p>Kacchi Fine: {kachi.kachiFine}</p>
-      </div>
+      </div> */}
+      {Array.isArray(kachi) && kachi.length > 0 && (
+  <div className="kacchidiv my-3">
+    <h3 className="font-semibold mb-2">Kachi Items</h3>
+    <table className="w-full border border-collapse">
+      <thead>
+        <tr>
+          <th className="border p-2">Weight (g)</th>
+          <th className="border p-2">Tunch</th>
+          <th className="border p-2">Fine (g)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {kachi.map((item, index) => (
+          <tr key={index}>
+            <td className="border p-2 mx-1">{item.kachiwt}</td>
+            <td className="border p-2 mx-1">{item.kachiTunch}</td>
+            <td className="border p-2 mx-1">{item.kachiFine}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
+
 
       <div className="valuediv mt-3">
         <p>Total Fine Credit: {totalFineCredit}</p>

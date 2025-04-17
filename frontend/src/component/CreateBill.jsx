@@ -14,7 +14,18 @@ const CreateBill = () => {
   const [showOverlay, setShowOverlay] = useState(false);
   const [newItem, setNewItem] = useState({ itemName: "" });
   const [totals, setTotals] = useState({ grossWeight: 0, netWeight: 0, totalSilver: 0, netLabour: 0 });
-  const [kachi, setKachi] = useState({ kachiwt: 0, kachiTunch: 0, kachiFine: 0 });
+  // const [kachi, setKachi] = useState({ kachiwt: 0, kachiTunch: 0, kachiFine: 0 });
+  const [kachis, setKachis] = useState([{ kachiwt: 0, kachiTunch: 0, kachiFine: 0 }]);
+  const addKachhi = () => {
+    setKachis([...kachis, { kachiwt: 0, kachiTunch: 0, kachiFine: 0 }]);
+  };
+  const handleKachhiChange = (index, field, value) => {
+    const updated = [...kachis];
+    updated[index][field] = parseFloat(value) || 0;
+    updated[index].kachiFine = (updated[index].kachiwt * updated[index].kachiTunch) / 100;
+    setKachis(updated);
+  };
+    
   const [fine, setFine] = useState(0);
   const [received, setReceived] = useState(0);
   // const [billAdded, setBillAdded] = useState(true);
@@ -90,12 +101,16 @@ const CreateBill = () => {
     setTotals({ grossWeight: totalGross, netWeight: totalNet, totalSilver, netLabour: totalLabour });
   }, [items]);
 
+  // useEffect(() => {
+  //   const calcFine = (kachi.kachiwt * kachi.kachiTunch) / 100;
+  //   setFine(calcFine);
+  //   kachi.kachiFine = calcFine;
+  // }, [kachi]);
   useEffect(() => {
-    const calcFine = (kachi.kachiwt * kachi.kachiTunch) / 100;
-    setFine(calcFine);
-    kachi.kachiFine = calcFine;
-  }, [kachi]);
-
+    const totalFine = kachis.reduce((acc, k) => acc + (k.kachiwt * k.kachiTunch) / 100, 0);
+    setFine(totalFine);
+  }, [kachis]);
+  
   const handleRetailerChange = (e) => {
     const selected = retailers.find((r) => r.name === e.target.value);
     setSelectedRetailer(selected);
@@ -155,7 +170,8 @@ const CreateBill = () => {
       rate,
       items,
       totals,
-      kachi,
+      // kachi,
+      kachi: kachis,
       totalFineCredit,
       totalAmount,
       received,
@@ -388,7 +404,37 @@ const CreateBill = () => {
         <div>Total Silver: {totals.totalSilver.toFixed(2)}</div>
         <div>Total labour: ₹{totals.netLabour.toFixed(2)}</div>
       </div>
-      <div className="kacchidiv bg-light d-flex justify-content-between">
+      <div>
+  <h3 className="font-bold mt-4">Kachhi Details</h3>
+  {kachis.map((k, index) => (
+    <div key={index} className="flex gap-2 mb-2">
+      <input
+        type="number"
+        placeholder="Weight"
+        value={k.kachiwt}
+        onChange={(e) => handleKachhiChange(index, 'kachiwt', e.target.value)}
+        className="border p-2"
+      />
+      <input
+        type="number"
+        placeholder="Tunch"
+        value={k.kachiTunch}
+        onChange={(e) => handleKachhiChange(index, 'kachiTunch', e.target.value)}
+        className="border p-2"
+      />
+      <input
+        type="number"
+        value={k.kachiFine.toFixed(2)}
+        disabled
+        className="border p-2"
+        placeholder="Fine"
+      />
+    </div>
+  ))}
+  <button onClick={addKachhi} className="btn btn-outline btn-sm text-blue-600">+ Add Kachhi</button>
+</div>
+
+      {/* <div className="kacchidiv bg-light d-flex justify-content-between">
         <div classname="d-flex flex-column bg-dark">
           <label>Kacchi Wt</label>
           <input type="number" placeholder="Kachi Wt" onChange={(e) => setKachi({ ...kachi, kachiwt: e.target.value })} className="border p-2" />
@@ -401,7 +447,7 @@ const CreateBill = () => {
           <label>Kacchi Fine</label>
           <input type="number" placeholder="Fine" value={kachi.kachiFine} disabled className="border p-2" />
         </div>
-      </div>
+      </div> */}
       <div className="valuediv bg-light d-flex justify-content-between mt-3 p-2">
         <div className="border mx-2 p-2">Total Fine Credit: {totalFineCredit.toFixed(2)}</div>
         <div className="border mx-2 p-2">Total Amount: ₹{totalAmount.toFixed(2)}</div>
@@ -438,7 +484,7 @@ const CreateBill = () => {
           rate={rate}
           items={items}
           totals={totals}
-          kachi={kachi}
+          kachi={kachis}
           totalFineCredit={totalFineCredit}
           totalAmount={totalAmount}
           received={received}
@@ -456,7 +502,7 @@ const CreateBill = () => {
               rate={rate}
               items={items}
               totals={totals}
-              kachi={kachi} // assuming it's a single object
+              kachi={kachis} // assuming it's a single object
               totalFineCredit={totalFineCredit}
               totalAmount={totalAmount}
               received={received}

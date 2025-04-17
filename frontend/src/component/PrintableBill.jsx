@@ -148,11 +148,28 @@ const PrintableBill = ({
 
       </div>
 
-      <div className="totaldiv bg-light d-flex justify-content-between mt-3 mb-3 p-2">
+      {/* <div className="totaldiv bg-light d-flex justify-content-between mt-3 mb-3 p-2">
         <div>kachiwt: {kachi.kachiwt}g</div>
         <div>kachi Tounch: {kachi.kachiTunch}g</div>
         <div>Kachi Fine: {kachi.kachiFine}g</div>
+      </div> */}
+      <div className="totaldiv bg-light d-flex flex-wrap justify-content-between mt-3 mb-3 p-2" style={{ flexWrap: "wrap",justifyContent:"center" }}>
+  {kachi && kachi.length > 0 ? (
+    kachi.map((entry, index) => (
+      <div key={index} className="d-flex w-100   border ">
+        <div className="d-flex justify-content-center align-items-center" style={{border:"0.5px solid black",width:"15%",padding:"3px"}}>Kachi #{index + 1}</div>
+        <div className="d-flex  justify-content-center align-items-center" style={{width:"85%"}}>
+        <div style={{margin:"6px"}}>Kachi Wt: {entry.kachiwt}g</div>
+        <div style={{margin:"6px"}}>Kachi Tunch: {entry.kachiTunch}</div>
+        <div style={{margin:"6px"}}>Kachi Fine: {entry.kachiFine}g</div>
+        </div>
       </div>
+    ))
+  ) : (
+    <div className="text-muted">No Kachi Data</div>
+  )}
+</div>
+
     
       <div className="valuediv bg-light d-flex justify-content-between mt-3 p-2">
         <div className="border mx-2 p-2">Total Fine Credit: {totalFineCredit.toFixed(2)}g</div>
