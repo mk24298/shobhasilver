@@ -140,41 +140,41 @@ const RetailerBillsPage = () => {
                     <button type="submit" className="btn btn-primary" disabled={formsubmit}>Submit Fine Payment</button>
                 </form>
             </div>
-            {fineGivenList.length > 0 && (
-    <div className="fine-payments mt-6">
-        <h3 className="text-lg font-semibold mb-2">Fine Payments</h3>
-        <table className="min-w-full table-auto border-collapse border border-gray-300">
-            <thead className="bg-gray-100">
-                <tr>
-                    <th className="border border-gray-300 px-4 py-2 text-left">Date</th>
-                    <th className="border border-gray-300 px-4 py-2 text-left">Fine Given (gms)</th>
-                    <th className="border border-gray-300 px-4 py-2 text-left">Adjusted Bills</th>
-                </tr>
-            </thead>
-            <tbody>
-                {fineGivenList.map((payment, index) => (
-                    <tr key={index} className="border-b border-gray-200">
-                        <td className="border border-gray-300 px-4 py-2">{payment.date}</td>
-                        <td className="border border-gray-300 px-4 py-2">{payment.fineGiven}</td>
-                        <td className="border border-gray-300 px-4 py-2">
-                            {payment.adjustments && payment.adjustments.length > 0 ? (
-                                <ul className="list-disc ml-4">
-                                    {payment.adjustments.map((adjustment, idx) => (
-                                        <li key={idx}>
-                                            Bill ID: <strong>{adjustment.billId}</strong> — Adjusted: <strong>{adjustment.adjusted} gms</strong>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <em>No Adjustments</em>
-                            )}
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    </div>
-)}
+            {fineGivenList && fineGivenList.length > 0 && (
+                <div className="fine-payments mt-6">
+                    <h3 className="text-lg font-semibold mb-2">Fine Payments</h3>
+                    <table className="min-w-full table-auto border-collapse border border-gray-300">
+                        <thead className="bg-gray-100">
+                            <tr>
+                                <th className="border border-gray-300 px-4 py-2 text-left">Date</th>
+                                <th className="border border-gray-300 px-4 py-2 text-left">Fine Given (gms)</th>
+                                <th className="border border-gray-300 px-4 py-2 text-left">Adjusted Bills</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {fineGivenList.map((payment, index) => (
+                                <tr key={index} className="border-b border-gray-200">
+                                    <td className="border border-gray-300 px-4 py-2">{payment.date}</td>
+                                    <td className="border border-gray-300 px-4 py-2">{payment.fineGiven}</td>
+                                    <td className="border border-gray-300 px-4 py-2">
+                                        {payment.adjustments && payment.adjustments.length > 0 ? (
+                                            <ul className="list-disc ml-4">
+                                                {payment.adjustments.map((adjustment, idx) => (
+                                                    <li key={idx}>
+                                                        Bill ID: <strong>{adjustment.billId}</strong> — Adjusted: <strong>{adjustment.adjusted} gms</strong>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <em>No Adjustments</em>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
 
 
             {bills.length > 0 && (
