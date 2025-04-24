@@ -83,10 +83,11 @@ router.post("/create-bill", async (req, res) => {
 
     // 3. Add new bill with generated billId
     const finalBill = { ...bill, billId: newBillId };
-
+    const remaining = parseFloat(bill.remaining || 0);
     const result = await Retailer.updateOne(
       { retailerId },
-      { $push: { bills: finalBill } }
+      { $push: { bills: finalBill },
+      $inc: { fineBalance: remaining } }
     );
 
     if (result.modifiedCount === 0) {

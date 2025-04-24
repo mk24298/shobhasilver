@@ -15,7 +15,7 @@ router.post('/getretailerbills', async (req, res) => {
   
       if (!retailer) return res.status(404).json({ error: 'Retailer not found' });
   
-      res.json({ bills: retailer.bills });
+      res.json({ retailer: retailer});
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Server error' });
