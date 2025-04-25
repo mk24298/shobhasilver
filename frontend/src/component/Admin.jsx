@@ -5,6 +5,7 @@ import AddStockForm from './AddStockForm';
 import DisplayStocks from './DisplayStocks';
 import RetailerBillsPage from './RetailersBillPage';
 import CreateRetailerForm from './CreateRetailer';
+import UpdateStockForm from './UpdateStockForm';
 
 
 export default function Admin() {
@@ -26,6 +27,9 @@ export default function Admin() {
   };
   const handleCreateRetailer = () => {
     setView('newretailer');
+  };
+  const handleUpdateStock = () => {
+    setView('updatestock');
   };
   return (
     <div className="container">
@@ -66,12 +70,21 @@ export default function Admin() {
         >
           Add Retailer
         </button>
+        <button
+          className="btn btn-success mx-2"
+          onClick={handleUpdateStock}
+          disabled={view === 'updatestock'}
+        >
+         Update Stock
+        </button>
       </div>
       {view === 'createbill' && <CreateBill />}
       {view === 'credit' && <RetailerBillsPage />}
       {view === 'stock' && <DisplayStocks />}
       {view === 'entry' && <AddStockForm/>}
       {view === 'newretailer' && <CreateRetailerForm/>}
+      {view === 'updatestock' && <UpdateStockForm/>}
+
 
 
     </div>

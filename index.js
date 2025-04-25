@@ -30,6 +30,8 @@ app.use("/api", require("./routes/addStock"));
 app.use("/api", require("./routes/getStock"));
 app.use("/api", require("./routes/getBills"));
 app.use("/api", require("./routes/finePayment"));
+app.use("/api", require("./routes/updateStock"));
+
 
 
 // Serve static files
