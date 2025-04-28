@@ -65,7 +65,7 @@ router.post("/create-bill", async (req, res) => {
       const updatedNet = parseFloat(stock.netWeight) - parseFloat(item.netWeight);
       const updatedPcs = parseFloat(stock.pcs) - parseFloat(item.pcs);
 
-      if (updatedGross < 0 || updatedNet < 0 || updatedPcs < 0) {
+      if (updatedPcs < 0) {
         return res.status(400).json({ message: `Not enough stock for item: ${item.itemName}` });
       }
 
