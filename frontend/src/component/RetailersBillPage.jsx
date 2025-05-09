@@ -85,6 +85,35 @@ const RetailerBillsPage = () => {
         newWindow.close();
     };
     // console.log("dataa",selectedRetailerData)
+    const handleDeleteBill = async (billId) => {
+        if (!selectedRetailerData || !selectedRetailerData.retailerId) {
+            return alert("Retailer data missing!");
+        }
+
+        const confirmDelete = window.confirm("Are you sure you want to delete this bill?");
+        if (!confirmDelete) return;
+
+        try {
+            const response = await fetch("https://shobhasilver.onrender.com/api/delete-bill", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    retailerId: selectedRetailerData.retailerId,
+                    billId: billId
+                })
+            });
+
+            const result = await response.json();
+            alert(result.message || "Bill deleted.");
+            fetchBills(); // refresh bills after deletion
+        } catch (error) {
+            console.error("Delete error:", error);
+            alert("Failed to delete the bill.");
+        }
+    };
+
     return (
         <div className="p-4">
             <h2 className="text-xl font-semibold mb-4">Retailer Bills Summary</h2>
@@ -204,6 +233,12 @@ const RetailerBillsPage = () => {
                             </div>
                             <button onClick={() => handlePrint(bill.billId)} className="btn btn-success mt-4">
                                 Print Bill
+                            </button>
+                            <button
+                                className="bg-red-500 text-white px-3 py-1 rounded"
+                                onClick={() => handleDeleteBill(bill.billId)}
+                            >
+                                Delete
                             </button>
                             {bill.profitSilver}g{bill.profitRupees}
                         </div>
