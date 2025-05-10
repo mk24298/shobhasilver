@@ -7,6 +7,7 @@ const RetailerBillsPage = () => {
     const [selectedRetailerData, setSelectedRetailerData] = useState(null);
     const [bills, setBills] = useState([]);
     const [totalRemaining, setTotalRemaining] = useState(0);
+    const [phone, setPhone] = useState(7505866498);
     const [fineBalance, setFinebalance] = useState(0);
     const [formsubmit, setFormSubmit] = useState(false);
     const [fineGivenList, setFineGivenList] = useState([]);
@@ -42,6 +43,7 @@ const RetailerBillsPage = () => {
         setBills(data.reverse());
         setFinebalance(rawdata.retailer.fineBalance)
         setFineGivenList(rawdata.retailer.FinePayments);
+        setPhone(rawdata.retailer.phone)
         console.log("erer", rawdata.retailer)
         console.log("ereeferfr", rawdata.retailer.FinePayments)
         console.log("ff", fineGivenList)
@@ -120,6 +122,7 @@ const RetailerBillsPage = () => {
             <div className="p-4 bg-gray-100 rounded mb-4">
                 <strong>Fine Balance (Fine):</strong> {fineBalance}g
             </div>
+            <a href={`https://wa.me/+91${phone}`} target='_blank'>Chat</a>
             <div className="flex gap-4 mb-4">
                 <select className="border px-2 py-1" value={selectedRetailerName} onChange={(e) => setSelectedRetailerName(e.target.value)}>
                     <option value="">Select Retailer</option>
