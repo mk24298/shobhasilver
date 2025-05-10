@@ -4,7 +4,7 @@ const router = express.Router();
 
 router.post('/addfinepayment', async (req, res) => {
     try {
-        let { name, date, fineGiven } = req.body;
+        let { name, date, fineGiven, remark } = req.body;
 
         // Convert fineGiven to number
         fineGiven = parseFloat(fineGiven);
@@ -47,7 +47,8 @@ router.post('/addfinepayment', async (req, res) => {
         retailer.FinePayments.push({
             date,
             fineGiven,
-            adjustments
+            adjustments,
+            remark
         });
 
         // Update fineBalance
@@ -66,7 +67,8 @@ router.post('/addfinepayment', async (req, res) => {
                     FinePayments: {
                         date,
                         fineGiven,
-                        adjustments
+                        adjustments,
+                        remark
                     }
                 }
             }

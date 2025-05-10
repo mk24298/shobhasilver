@@ -137,7 +137,8 @@ const RetailerBillsPage = () => {
                         setFormSubmit(true)
                         const fineGiven = parseFloat(e.target.fine.value);
                         const date = e.target.date.value;
-                        if (!fineGiven || !date) return alert("Please enter both fields.");
+                        const remark = e.target.remark.value;
+                        if (!fineGiven || !date || !remark) return alert("Please fill all fields.");
 
                         const response = await fetch('https://shobhasilver.onrender.com/api/addfinepayment', {
                             method: 'POST',
@@ -145,7 +146,8 @@ const RetailerBillsPage = () => {
                             body: JSON.stringify({
                                 name: selectedRetailerName,
                                 date,
-                                fineGiven
+                                fineGiven,
+                                remark
                             })
                         });
 
@@ -166,6 +168,10 @@ const RetailerBillsPage = () => {
                         <label className="block">Fine Given (gms):</label>
                         <input type="number" name="fine" step="0.01" className="border p-1 w-full" required />
                     </div>
+                    <div className="mb-2">
+                        <label className="block">Remark:</label>
+                        <input name="remark" className="border p-1 w-full" required />
+                    </div>
                     <button type="submit" className="btn btn-primary" disabled={formsubmit}>Submit Fine Payment</button>
                 </form>
             </div>
@@ -178,6 +184,8 @@ const RetailerBillsPage = () => {
                                 <th className="border border-gray-300 px-4 py-2 text-left">Date</th>
                                 <th className="border border-gray-300 px-4 py-2 text-left">Fine Given (gms)</th>
                                 <th className="border border-gray-300 px-4 py-2 text-left">Adjusted Bills</th>
+                                <th className="border border-gray-300 px-4 py-2 text-left">Remark</th>
+
                             </tr>
                         </thead>
                         <tbody>
@@ -197,6 +205,9 @@ const RetailerBillsPage = () => {
                                         ) : (
                                             <em>No Adjustments</em>
                                         )}
+                                    </td>
+                                    <td className="border border-gray-300 px-4 py-2">
+                                        {payment.remark ? payment.remark : <em className="text-gray-400">No Remark</em>}
                                     </td>
                                 </tr>
                             ))}
