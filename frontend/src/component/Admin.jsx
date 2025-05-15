@@ -31,6 +31,28 @@ export default function Admin() {
   const handleUpdateStock = () => {
     setView('updatestock');
   };
+  const handleDownload = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/download-retailers-report', {
+        method: 'GET',
+      }); if (!response.ok) {
+        throw new Error('Failed to fetch PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Retailers_Report.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      alert('Error downloading PDF');
+    }
+  };
   return (
     <div className="container">
       <h1 className="text-warning text-center my-4">Shobha Silvers</h1>
@@ -75,15 +97,18 @@ export default function Admin() {
           onClick={handleUpdateStock}
           disabled={view === 'updatestock'}
         >
-         Update Stock
+          Update Stock
+        </button>
+        <button onClick={handleDownload}  className="btn btn-dark mx-2">
+          Download
         </button>
       </div>
       {view === 'createbill' && <CreateBill />}
       {view === 'credit' && <RetailerBillsPage />}
       {view === 'stock' && <DisplayStocks />}
-      {view === 'entry' && <AddStockForm/>}
-      {view === 'newretailer' && <CreateRetailerForm/>}
-      {view === 'updatestock' && <UpdateStockForm/>}
+      {view === 'entry' && <AddStockForm />}
+      {view === 'newretailer' && <CreateRetailerForm />}
+      {view === 'updatestock' && <UpdateStockForm />}
 
 
 
