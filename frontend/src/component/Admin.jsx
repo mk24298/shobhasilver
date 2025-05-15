@@ -33,7 +33,7 @@ export default function Admin() {
   };
   const handleDownload = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/download-retailers-report', {
+      const response = await fetch('https://shobhasilver.onrender.com/api/download-retailers-report', {
         method: 'GET',
       }); if (!response.ok) {
         throw new Error('Failed to fetch PDF');
