@@ -11,6 +11,8 @@ const RetailerBillsPage = () => {
     const [fineBalance, setFinebalance] = useState(0);
     const [formsubmit, setFormSubmit] = useState(false);
     const [fineGivenList, setFineGivenList] = useState([]);
+    const [cashEntries, setCashEntries] = useState([]);
+
     useEffect(() => {
         fetch('https://shobhasilver.onrender.com/api/getretailers')
             .then((res) => res.json())
@@ -44,9 +46,10 @@ const RetailerBillsPage = () => {
         setFinebalance(rawdata.retailer.fineBalance)
         setFineGivenList(rawdata.retailer.FinePayments);
         setPhone(rawdata.retailer.phone)
-        console.log("erer", rawdata.retailer)
-        console.log("ereeferfr", rawdata.retailer.FinePayments)
-        console.log("ff", fineGivenList)
+        setCashEntries(rawdata.retailer.cashEntries || []);
+        // console.log("erer", rawdata.retailer)
+        // console.log("ereeferfr", rawdata.retailer.FinePayments)
+        // console.log("ff", fineGivenList)
 
         const remainingSum = data.reduce((acc, bill) => acc + (parseFloat(bill.remaining) || 0), 0);
         setTotalRemaining(remainingSum.toFixed(2));
@@ -132,51 +135,96 @@ const RetailerBillsPage = () => {
                 </select>
                 <button onClick={fetchBills} className="bg-blue-600 text-white px-4 py-1 rounded">Search</button>
             </div>
-            <div className="bg-white p-4 rounded shadow mb-6">
-                <h3 className="text-lg font-semibold mb-2">Add Fine Payment</h3>
-                <form
-                    onSubmit={async (e) => {
-                        e.preventDefault();
-                        setFormSubmit(true)
-                        const fineGiven = parseFloat(e.target.fine.value);
-                        const date = e.target.date.value;
-                        const remark = e.target.remark.value;
-                        if (!fineGiven || !date || !remark) return alert("Please fill all fields.");
+            <div className='d-flex flex-row justify-content-center '>
+                <div className="bg-white p-4 rounded shadow mb-6">
+                    <h3 className="text-lg font-semibold mb-2">Add Fine Payment</h3>
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            setFormSubmit(true)
+                            const fineGiven = parseFloat(e.target.fine.value);
+                            const date = e.target.date.value;
+                            const remark = e.target.remark.value;
+                            if (!fineGiven || !date || !remark) return alert("Please fill all fields.");
 
-                        const response = await fetch('https://shobhasilver.onrender.com/api/addfinepayment', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                name: selectedRetailerName,
-                                date,
-                                fineGiven,
-                                remark
-                            })
-                        });
+                            const response = await fetch('https://shobhasilver.onrender.com/api/addfinepayment', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    name: selectedRetailerName,
+                                    date,
+                                    fineGiven,
+                                    remark
+                                })
+                            });
 
-                        const result = await response.json();
-                        alert(result.message || 'Fine payment recorded.');
-                        setFormSubmit(false)
+                            const result = await response.json();
+                            alert(result.message || 'Fine payment recorded.');
+                            setFormSubmit(false)
 
-                        // refresh data
-                        fetchBills();
-                        e.target.reset();
-                    }}
-                >
-                    <div className="mb-2">
-                        <label className="block">Date:</label>
-                        <input type="date" name="date" className="border p-1 w-full" required />
-                    </div>
-                    <div className="mb-2">
-                        <label className="block">Fine Given (gms):</label>
-                        <input type="number" name="fine" step="0.01" className="border p-1 w-full" required />
-                    </div>
-                    <div className="mb-2">
-                        <label className="block">Remark:</label>
-                        <input name="remark" className="border p-1 w-full" required />
-                    </div>
-                    <button type="submit" className="btn btn-primary" disabled={formsubmit}>Submit Fine Payment</button>
-                </form>
+                            // refresh data
+                            fetchBills();
+                            e.target.reset();
+                        }}
+                    >
+                        <div className="mb-2">
+                            <label className="block">Date:</label>
+                            <input type="date" name="date" className="border p-1 w-full" required />
+                        </div>
+                        <div className="mb-2">
+                            <label className="block">Fine Given (gms):</label>
+                            <input type="number" name="fine" step="0.01" className="border p-1 w-full" required />
+                        </div>
+                        <div className="mb-2">
+                            <label className="block">Remark:</label>
+                            <input name="remark" className="border p-1 w-full" required />
+                        </div>
+                        <button type="submit" className="btn btn-primary" disabled={formsubmit}>Submit Fine Payment</button>
+                    </form>
+                </div>
+                <div className="bg-white p-4 rounded shadow mb-6">
+                    <h3 className="text-lg font-semibold mb-2">Add Cash Entry</h3>
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            const amount = parseFloat(e.target.amount.value);
+                            const date = e.target.date.value;
+                            const remark = e.target.remark.value;
+                            if (!amount || !date || !remark) return alert("Please fill all fields.");
+
+                            const response = await fetch('https://shobhasilver.onrender.com/api/addcashentry', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    name: selectedRetailerName,
+                                    date,
+                                    amount,
+                                    remark
+                                })
+                            });
+
+                            const result = await response.json();
+                            alert(result.message || 'Cash entry added.');
+
+                            fetchBills(); // Refresh entries
+                            e.target.reset();
+                        }}
+                    >
+                        <div className="mb-2">
+                            <label className="block">Date:</label>
+                            <input type="date" name="date" className="border p-1 w-full" required />
+                        </div>
+                        <div className="mb-2">
+                            <label className="block">Amount (₹):</label>
+                            <input type="number" name="amount" step="0.01" className="border p-1 w-full" required />
+                        </div>
+                        <div className="mb-2">
+                            <label className="block">Remark:</label>
+                            <input name="remark" className="border p-1 w-full" required />
+                        </div>
+                        <button type="submit" className="btn btn-primary">Submit Cash Entry</button>
+                    </form>
+                </div>
             </div>
             {fineGivenList && fineGivenList.length > 0 && (
                 <div className="fine-payments mt-6">
@@ -218,6 +266,31 @@ const RetailerBillsPage = () => {
                     </table>
                 </div>
             )}
+<div className="cash-entries mt-6">
+    <h3 className="text-lg font-semibold mb-2">Cash Entries</h3>
+    {cashEntries.length === 0 ? (
+        <p className="text-gray-500">None</p>
+    ) : (
+        <table className="min-w-full table-auto border-collapse border border-gray-300">
+            <thead className="bg-gray-100">
+                <tr>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Date</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Amount (₹)</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Remark</th>
+                </tr>
+            </thead>
+            <tbody>
+                {cashEntries.map((entry, index) => (
+                    <tr key={index} className="border-b border-gray-200">
+                        <td className="border border-gray-300 px-4 py-2">{entry.date}</td>
+                        <td className="border border-gray-300 px-4 py-2">{entry.amount}</td>
+                        <td className="border border-gray-300 px-4 py-2">{entry.remark}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    )}
+</div>
 
 
             {bills.length > 0 && (

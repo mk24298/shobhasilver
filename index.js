@@ -33,6 +33,8 @@ app.use("/api", require("./routes/finePayment"));
 app.use("/api", require("./routes/updateStock"));
 app.use("/api", require("./routes/deleteBill"));
 app.use("/api", require("./routes/downloadRemaining"));
+app.use("/api", require("./routes/cashEntry"));
+
 
 
 
