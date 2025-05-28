@@ -8,7 +8,7 @@ router.post('/addcashentry', async (req, res) => {
 
         // Validate inputs
         amount = parseFloat(amount);
-        if (!name || !date || isNaN(amount) || amount <= 0) {
+        if (!name || !date || isNaN(amount)) {
             return res.status(400).json({ message: 'Missing or invalid required fields.' });
         }
 
