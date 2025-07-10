@@ -10,7 +10,7 @@ export default function UpdateStockForm() {
   });
 
   useEffect(() => {
-    fetch("https://shobhasilver.onrender.com/api/getstocks")
+    fetch("https://shobhasilverst.onrender.com/api/getstocks")
       .then(res => res.json())
       .then(data => setStocks(data));
   }, []);
@@ -56,7 +56,7 @@ export default function UpdateStockForm() {
       pcs: form.pcs
     };
 
-    const res = await fetch("https://shobhasilver.onrender.com/api/updatestock", {
+    const res = await fetch("https://shobhasilverst.onrender.com/api/updatestock", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)

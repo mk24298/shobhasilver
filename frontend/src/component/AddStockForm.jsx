@@ -23,7 +23,7 @@ export default function AddStockForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await fetch("https://shobhasilver.onrender.com/api/addstock", {
+    const res = await fetch("https://shobhasilverst.onrender.com/api/addstock", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form)

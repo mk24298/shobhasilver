@@ -74,11 +74,11 @@ const CreateBill = () => {
 
 
   useEffect(() => {
-    fetch("https://shobhasilver.onrender.com/api/getretailers")
+    fetch("https://shobhasilverst.onrender.com/api/getretailers")
       .then((res) => res.json())
       .then((data) => setRetailers(data));
 
-    fetch("https://shobhasilver.onrender.com/api/getstocks")
+    fetch("https://shobhasilverst.onrender.com/api/getstocks")
       .then((res) => res.json())
       .then((data) => setStocks(data));
   }, []);
@@ -181,7 +181,7 @@ const CreateBill = () => {
     };
 
     try {
-      const response = await fetch("https://shobhasilver.onrender.com/api/create-bill", {
+      const response = await fetch("https://shobhasilverst.onrender.com/api/create-bill", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

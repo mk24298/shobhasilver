@@ -15,7 +15,7 @@ export default function CreateRetailerForm() {
     setMessage("");
 
     try {
-      const res = await fetch("https://shobhasilver.onrender.com/api/create-retailer", {
+      const res = await fetch("https://shobhasilverst.onrender.com/api/create-retailer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

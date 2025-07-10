@@ -6,7 +6,7 @@ export default function DisplayStocks() {
   const [showAnalytics, setShowAnalytics] = useState(false);
 
   useEffect(() => {
-    fetch("https://shobhasilver.onrender.com/api/getstocks")
+    fetch("https://shobhasilverst.onrender.com/api/getstocks")
       .then(res => res.json())
       .then(data => setStocks(data))
       .catch(err => console.error("Error fetching stocks:", err));
