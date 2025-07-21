@@ -140,14 +140,19 @@ const PrintableBill = ({
       </div>
 
       {/* Totals */}
-      <div className="totaldiv bg-light d-flex justify-content-between mt-3 mb-3" style={{border:"1px solid black"}}>
+      {/* <div className="totaldiv bg-light d-flex justify-content-between mt-3 mb-3" style={{border:"1px solid black"}}>
         <div style={{border:"1px solid black" ,padding:"20px"}}>Total Gross: {totals.grossWeight.toFixed(2)}g</div>
         <div style={{border:"1px solid black" ,padding:"20px"}}>Total Net: {totals.netWeight.toFixed(2)}g</div>
         <div style={{border:"1px solid black" ,padding:"20px"}}>Total Silver: {totals.totalSilver.toFixed(2)}g</div>
         <div style={{border:"1px solid black" ,padding:"20px"}}>Total Labour: ₹{totals.netLabour}</div>
 
-      </div>
-
+      </div> */}
+<div className="totaldiv bg-light d-flex justify-content-between mt-3 mb-3" style={{border:"1px solid black"}}>
+  <div style={{border:"1px solid black" ,padding:"20px"}}>Total Gross: {(totals?.grossWeight ?? 0).toFixed(2)}g</div>
+  <div style={{border:"1px solid black" ,padding:"20px"}}>Total Net: {(totals?.netWeight ?? 0).toFixed(2)}g</div>
+  <div style={{border:"1px solid black" ,padding:"20px"}}>Total Silver: {(totals?.totalSilver ?? 0).toFixed(2)}g</div>
+  <div style={{border:"1px solid black" ,padding:"20px"}}>Total Labour: ₹{totals?.netLabour ?? 0}</div>
+</div>
       {/* <div className="totaldiv bg-light d-flex justify-content-between mt-3 mb-3 p-2">
         <div>kachiwt: {kachi.kachiwt}g</div>
         <div>kachi Tounch: {kachi.kachiTunch}g</div>
@@ -170,15 +175,20 @@ const PrintableBill = ({
   )}
 </div>
 
-    
-      <div className="valuediv bg-light d-flex justify-content-between mt-3 p-2">
+    <div className="valuediv bg-light d-flex justify-content-between mt-3 p-2">
+  <div className="border mx-2 p-2">Total Fine Credit: {(totalFineCredit ?? 0).toFixed(2)}g</div>
+  <div className="border mx-2 p-2">Total Amount: ₹{(totalAmount ?? 0).toFixed(2)}</div>
+  <div className="border mx-2 p-2">Received: ₹{received ?? 0}</div>
+  <div className="border mx-2 p-2">Remaining(Fine): {(remaining ?? 0).toFixed(2)}g</div>
+</div>
+      {/* <div className="valuediv bg-light d-flex justify-content-between mt-3 p-2">
         <div className="border mx-2 p-2">Total Fine Credit: {totalFineCredit.toFixed(2)}g</div>
         <div className="border mx-2 p-2">Total Amount: ₹{totalAmount.toFixed(2)}</div>
         <div className="border mx-2 p-2">Received: ₹{received}</div>
         <div className="border mx-2 p-2">Remaining(Fine): {remaining.toFixed(2)}g</div>
 
      
-      </div>
+      </div> */}
       {/* Final Amounts */}
       {/* <div className="grid grid-cols-2 gap-2 border-t pt-4 mt-4 text-base font-medium">
         <div><strong>Total Fine (with Credit):</strong></div>
