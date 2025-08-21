@@ -84,32 +84,51 @@ router.post("/create-bill", async (req, res) => {
     // 3. Add new bill with generated billId
     const finalBill = { ...bill, billId: newBillId };
     const remaining = parseFloat(bill.remaining || 0);
-    const remainingCash=parseFloat(bill.remainingCash || 0);
-    console.log(remainingCash,"rerm")
+    const remainingCash = parseFloat(bill.remainingCash || 0);
+    console.log(remainingCash, "rerm")
 
-        // 5. Calculate new balances
+    // 5. Calculate new balances
     const newCashBalance = (retailer.cashBalance || 0) - remainingCash;
     const newFineBalance = (retailer.fineBalance || 0) + remaining;
-const today = new Date().toISOString().split("T")[0]; 
-        const cashEntry = {
-      amount: -remainingCash, // Deduction
-      date: today,
-      remark: `Bill #${newBillId} created, remaining cash deducted labour`
+    const today = new Date().toISOString().split("T")[0];
+    let updateQuery = {
+      $push: { bills: finalBill },
+      $set: {
+        cashBalance: newCashBalance,
+        fineBalance: newFineBalance,
+      },
     };
 
-     const result = await Retailer.updateOne(
-      { retailerId },
-      {
-        $push: {
-          bills: finalBill,
-          cashEntries: cashEntry
-        },
-        $set: {
-          cashBalance: newCashBalance,
-          fineBalance: newFineBalance
-        }
-      }
-    );
+    // ✅ Only add cash entry if amount is NOT 0
+    if (remainingCash !== 0) {
+      const cashEntry = {
+        amount: -remainingCash, // Deduction
+        date: today,
+        remark: `Bill #${newBillId} created, remaining cash deducted labour`,
+      };
+      updateQuery.$push.cashEntries = cashEntry;
+    }
+
+    const result = await Retailer.updateOne({ retailerId }, updateQuery);
+    // const cashEntry = {
+    //   amount: -remainingCash, // Deduction
+    //   date: today,
+    //   remark: `Bill #${newBillId} created, remaining cash deducted labour`
+    // };
+
+    // const result = await Retailer.updateOne(
+    //   { retailerId },
+    //   {
+    //     $push: {
+    //       bills: finalBill,
+    //       cashEntries: cashEntry
+    //     },
+    //     $set: {
+    //       cashBalance: newCashBalance,
+    //       fineBalance: newFineBalance
+    //     }
+    //   }
+    // );
 
     if (result.modifiedCount === 0) {
       return res.status(500).json({ message: "Failed to add bill to retailer" });
