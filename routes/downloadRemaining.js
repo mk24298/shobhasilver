@@ -19,10 +19,11 @@ router.get('/download-retailers-report', async (req, res) => {
         return {
           name: retailer.name,
           fineBalance: parseFloat(retailer.fineBalance || 0),
+          cashBalance: parseFloat(retailer.cashBalance || 0),
           totalRemaining: parseFloat(totalRemaining.toFixed(2))
         };
       })
-      .filter(ret => ret.fineBalance > 1 || ret.totalRemaining > 1);
+      .filter(ret => ret.fineBalance > 1 || ret.totalRemaining > 1 || ret.cashBalance > 1);
 
     if (filteredRetailers.length === 0) {
       return res.status(200).json({ message: 'No retailers with fineBalance > 1 or totalRemaining > 1.' });
@@ -45,6 +46,7 @@ router.get('/download-retailers-report', async (req, res) => {
         .text(`${i + 1}. ${ret.name}`)
         .text(`   Fine Balance: ${ret.fineBalance}`)
         .text(`   Total Remaining: ${ret.totalRemaining}`)
+        .text(`   Total cash Balance: ${ret.cashBalance}`)
         .moveDown();
     });
 

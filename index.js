@@ -34,6 +34,8 @@ app.use("/api", require("./routes/updateStock"));
 app.use("/api", require("./routes/deleteBill"));
 app.use("/api", require("./routes/downloadRemaining"));
 app.use("/api", require("./routes/cashEntry"));
+app.use("/api", require("./routes/retailerInfo"));
+
 
 
 

@@ -9,6 +9,7 @@ const RetailerBillsPage = () => {
     const [totalRemaining, setTotalRemaining] = useState(0);
     const [phone, setPhone] = useState(7505866498);
     const [fineBalance, setFinebalance] = useState(0);
+    const [cashBalance, setCashbalance] = useState(0);
     const [formsubmit, setFormSubmit] = useState(false);
     const [fineGivenList, setFineGivenList] = useState([]);
     const [cashEntries, setCashEntries] = useState([]);
@@ -44,6 +45,7 @@ const RetailerBillsPage = () => {
         setSelectedRetailerData(retailer);
         setBills(data.reverse());
         setFinebalance(rawdata.retailer.fineBalance)
+        setCashbalance(rawdata.retailer.cashBalance)
         setFineGivenList(rawdata.retailer.FinePayments);
         setPhone(rawdata.retailer.phone)
         setCashEntries(rawdata.retailer.cashEntries || []);
@@ -124,6 +126,8 @@ const RetailerBillsPage = () => {
             <h2 className="text-xl font-semibold mb-4">Retailer Bills Summary</h2>
             <div className="p-4 bg-gray-100 rounded mb-4">
                 <strong>Fine Balance (Fine):</strong> {fineBalance}g
+                <br />
+                <strong>Cash Balance:</strong> Rs. {cashBalance}
             </div>
             <a href={`https://wa.me/+91${phone}`} target='_blank'>Chat</a>
             <div className="flex gap-4 mb-4">
@@ -266,31 +270,31 @@ const RetailerBillsPage = () => {
                     </table>
                 </div>
             )}
-<div className="cash-entries mt-6">
-    <h3 className="text-lg font-semibold mb-2">Cash Entries</h3>
-    {cashEntries.length === 0 ? (
-        <p className="text-gray-500">None</p>
-    ) : (
-        <table className="min-w-full table-auto border-collapse border border-gray-300">
-            <thead className="bg-gray-100">
-                <tr>
-                    <th className="border border-gray-300 px-4 py-2 text-left">Date</th>
-                    <th className="border border-gray-300 px-4 py-2 text-left">Amount (₹)</th>
-                    <th className="border border-gray-300 px-4 py-2 text-left">Remark</th>
-                </tr>
-            </thead>
-            <tbody>
-                {cashEntries.map((entry, index) => (
-                    <tr key={index} className="border-b border-gray-200">
-                        <td className="border border-gray-300 px-4 py-2">{entry.date}</td>
-                        <td className="border border-gray-300 px-4 py-2">{entry.amount}</td>
-                        <td className="border border-gray-300 px-4 py-2">{entry.remark}</td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    )}
-</div>
+            <div className="cash-entries mt-6">
+                <h3 className="text-lg font-semibold mb-2">Cash Entries</h3>
+                {cashEntries.length === 0 ? (
+                    <p className="text-gray-500">None</p>
+                ) : (
+                    <table className="min-w-full table-auto border-collapse border border-gray-300">
+                        <thead className="bg-gray-100">
+                            <tr>
+                                <th className="border border-gray-300 px-4 py-2 text-left">Date</th>
+                                <th className="border border-gray-300 px-4 py-2 text-left">Amount (₹)</th>
+                                <th className="border border-gray-300 px-4 py-2 text-left">Remark</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {cashEntries.map((entry, index) => (
+                                <tr key={index} className="border-b border-gray-200">
+                                    <td className="border border-gray-300 px-4 py-2">{entry.date}</td>
+                                    <td className="border border-gray-300 px-4 py-2">{entry.amount}</td>
+                                    <td className="border border-gray-300 px-4 py-2">{entry.remark}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
 
 
             {bills.length > 0 && (
@@ -315,6 +319,9 @@ const RetailerBillsPage = () => {
                                     totalAmount={bill.totalAmount}
                                     received={bill.received}
                                     remaining={bill.remaining}
+                                    closingFine={fineBalance}
+                                    closingCash={cashBalance}
+                             
                                 />
                                 <p>Reprint</p>
                             </div>

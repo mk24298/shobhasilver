@@ -12,6 +12,10 @@ const PrintableBill = ({
   totalAmount,
   received,
   remaining,
+  closingFine,
+  closingCash,
+  lastFine,
+  lastCash
 }) => {
   return (
     <div className="p-6  text-black bg-white" style={{position:"relative"}}>
@@ -181,6 +185,23 @@ const PrintableBill = ({
   <div className="border mx-2 p-2">Received: ₹{received ?? 0}</div>
   <div className="border mx-2 p-2">Remaining(Fine): {(remaining ?? 0).toFixed(2)}g</div>
 </div>
+   <div className="lastBalanceDiv bg-light d-flex justify-content-between mt-3 p-2" style={{border:"1px solid black"}}>
+        <div className="border mx-2 p-2">
+          Last Fine Balance:{(lastFine ?? 0).toFixed(2)}gm
+        </div>
+        <div className="border mx-2 p-2">
+         Last Cash Balance: ₹{(lastCash ?? 0).toFixed(2)}
+        </div>
+      </div>
+
+      <div className="closingBalanceDiv bg-light d-flex justify-content-between mt-3 p-2" style={{border:"1px solid black"}}>
+        <div className="border mx-2 p-2">
+          Closing Fine Balance: {(closingFine ?? 0).toFixed(2)}gm
+        </div>
+        <div className="border mx-2 p-2">
+          Closing Cash Balance: ₹ {(closingCash ?? 0).toFixed(2)}
+        </div>
+      </div>
       {/* <div className="valuediv bg-light d-flex justify-content-between mt-3 p-2">
         <div className="border mx-2 p-2">Total Fine Credit: {totalFineCredit.toFixed(2)}g</div>
         <div className="border mx-2 p-2">Total Amount: ₹{totalAmount.toFixed(2)}</div>

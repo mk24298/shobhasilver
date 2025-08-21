@@ -1,7 +1,7 @@
 // BillToPrint.js
 import React, { forwardRef } from "react";
 
-const BillToPrint = forwardRef(({ selectedRetailer, date, rate, items, totals, kachi, totalFineCredit, totalAmount, received, remaining }, ref) => {
+const BillToPrint = forwardRef(({ selectedRetailer, date, rate, items, totals, kachi, totalFineCredit, totalAmount, received, remaining,closingFine,closingCash,lastFine,lastCash }, ref) => {
   return (
     <div ref={ref} className="p-4 text-black print:text-black bg-white">
       <h2 className="text-lg font-bold mb-2">Bill</h2>
@@ -63,28 +63,28 @@ const BillToPrint = forwardRef(({ selectedRetailer, date, rate, items, totals, k
         <p>Kacchi Fine: {kachi.kachiFine}</p>
       </div> */}
       {Array.isArray(kachi) && kachi.length > 0 && (
-  <div className="kacchidiv my-3">
-    <h3 className="font-semibold mb-2">Kachi Items</h3>
-    <table className="w-full border border-collapse">
-      <thead>
-        <tr>
-          <th className="border p-2">Weight (g)</th>
-          <th className="border p-2">Tunch</th>
-          <th className="border p-2">Fine (g)</th>
-        </tr>
-      </thead>
-      <tbody>
-        {kachi.map((item, index) => (
-          <tr key={index}>
-            <td className="border p-2 mx-1">{item.kachiwt}</td>
-            <td className="border p-2 mx-1">{item.kachiTunch}</td>
-            <td className="border p-2 mx-1">{item.kachiFine}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-)}
+        <div className="kacchidiv my-3">
+          <h3 className="font-semibold mb-2">Kachi Items</h3>
+          <table className="w-full border border-collapse">
+            <thead>
+              <tr>
+                <th className="border p-2">Weight (g)</th>
+                <th className="border p-2">Tunch</th>
+                <th className="border p-2">Fine (g)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {kachi.map((item, index) => (
+                <tr key={index}>
+                  <td className="border p-2 mx-1">{item.kachiwt}</td>
+                  <td className="border p-2 mx-1">{item.kachiTunch}</td>
+                  <td className="border p-2 mx-1">{item.kachiFine}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
 
       <div className="valuediv mt-3">
@@ -92,6 +92,23 @@ const BillToPrint = forwardRef(({ selectedRetailer, date, rate, items, totals, k
         <p>Total Amount: ₹{totalAmount.toFixed(2)}</p>
         <p>Received: ₹{received}</p>
         <p>Remaining: ₹{remaining.toFixed(2)}</p>
+      </div>
+      <div className="lastBalanceDiv bg-light d-flex justify-content-between mt-3 p-2" style={{border:"1px solid black"}}>
+        <div className="border mx-2 p-2">
+          Last Fine Balance: {(lastFine ?? 0).toFixed(2)}gm
+        </div>
+        <div className="border mx-2 p-2">
+         Last Cash Balance: ₹{(lastCash ?? 0).toFixed(2)}
+        </div>
+      </div>
+
+      <div className="closingBalanceDiv bg-light d-flex justify-content-between mt-3 p-2" style={{border:"1px solid black"}}>
+        <div className="border mx-2 p-2">
+          Closing Fine Balance: {(closingFine ?? 0).toFixed(2)}gmgm
+        </div>
+        <div className="border mx-2 p-2">
+          Closing Cash Balance: ₹{(closingCash ?? 0).toFixed(2)}
+        </div>
       </div>
     </div>
   );

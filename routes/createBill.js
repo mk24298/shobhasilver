@@ -84,10 +84,31 @@ router.post("/create-bill", async (req, res) => {
     // 3. Add new bill with generated billId
     const finalBill = { ...bill, billId: newBillId };
     const remaining = parseFloat(bill.remaining || 0);
-    const result = await Retailer.updateOne(
+    const remainingCash=parseFloat(bill.remainingCash || 0);
+    console.log(remainingCash,"rerm")
+
+        // 5. Calculate new balances
+    const newCashBalance = (retailer.cashBalance || 0) - remainingCash;
+    const newFineBalance = (retailer.fineBalance || 0) + remaining;
+const today = new Date().toISOString().split("T")[0]; 
+        const cashEntry = {
+      amount: -remainingCash, // Deduction
+      date: today,
+      remark: `Bill #${newBillId} created, remaining cash deducted labour`
+    };
+
+     const result = await Retailer.updateOne(
       { retailerId },
-      { $push: { bills: finalBill },
-      $inc: { fineBalance: remaining } }
+      {
+        $push: {
+          bills: finalBill,
+          cashEntries: cashEntry
+        },
+        $set: {
+          cashBalance: newCashBalance,
+          fineBalance: newFineBalance
+        }
+      }
     );
 
     if (result.modifiedCount === 0) {
@@ -97,6 +118,9 @@ router.post("/create-bill", async (req, res) => {
     res.status(201).json({
       message: `Bill created successfully with Bill ID: ${newBillId}`,
       billId: newBillId,
+      cashBalance: newCashBalance,
+      fineBalance: newFineBalance
+
     });
   } catch (error) {
     console.error("Error adding bill:", error);

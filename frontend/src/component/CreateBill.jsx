@@ -16,6 +16,8 @@ const CreateBill = () => {
   const [totals, setTotals] = useState({ grossWeight: 0, netWeight: 0, totalSilver: 0, netLabour: 0 });
   // const [kachi, setKachi] = useState({ kachiwt: 0, kachiTunch: 0, kachiFine: 0 });
   const [kachis, setKachis] = useState([{ kachiwt: 0, kachiTunch: 0, kachiFine: 0 }]);
+  const [lastBalance, setLastBalance] = useState({ fineBalance: null, cashBalance: null });
+  const [closingBalance, setClosingBalance] = useState({ fineBalance: null, cashBalance: null })
   const addKachhi = () => {
     setKachis([...kachis, { kachiwt: 0, kachiTunch: 0, kachiFine: 0 }]);
   };
@@ -25,7 +27,7 @@ const CreateBill = () => {
     updated[index].kachiFine = (updated[index].kachiwt * updated[index].kachiTunch) / 100;
     setKachis(updated);
   };
-    
+
   const [fine, setFine] = useState(0);
   const [received, setReceived] = useState(0);
   // const [billAdded, setBillAdded] = useState(true);
@@ -110,12 +112,33 @@ const CreateBill = () => {
     const totalFine = kachis.reduce((acc, k) => acc + (k.kachiwt * k.kachiTunch) / 100, 0);
     setFine(totalFine);
   }, [kachis]);
-  
-  const handleRetailerChange = (e) => {
+
+  // const handleRetailerChange = (e) => {
+  //   const selected = retailers.find((r) => r.name === e.target.value);
+  //   setSelectedRetailer(selected);
+  // };
+  const handleRetailerChange = async (e) => {
     const selected = retailers.find((r) => r.name === e.target.value);
     setSelectedRetailer(selected);
+    setLastBalance({ fineBalance: null, cashBalance: null }); // Reset balances
+    setClosingBalance({ fineBalance: null, cashBalance: null }); // Reset closing balances
+    if (selected) {
+      try {
+        const response = await fetch(`https://shobhasilverst.onrender.com/api/getretailerbalance/${selected.retailerId}`);
+        const data = await response.json();
+        if (response.ok) {
+          setLastBalance({
+            fineBalance: data.fineBalance || 0,
+            cashBalance: data.cashBalance || 0,
+          });
+        } else {
+          console.error("Error fetching retailer balance:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching retailer balance:", error);
+      }
+    }
   };
-
   const handleItemNameChange = (e) => {
     const item = stocks.find((i) => i.itemName === e.target.value);
     setNewItem({
@@ -128,6 +151,10 @@ const CreateBill = () => {
   };
 
   const addItem = () => {
+     if (!newItem.grossWeight || !newItem.pcs) {
+    alert("Please fill all required fields!");
+    return;
+  }
     if (!newItem.netLabour) {
       const net = parseFloat(newItem.netWeight || 0);
       const labour = newItem.labour ? (net * parseFloat(newItem.labour) / 1000) : 0;
@@ -144,9 +171,19 @@ const CreateBill = () => {
   };
 
   const totalFineCredit = totals.totalSilver - fine;
-  const totalAmount = (totalFineCredit * rate) / 1000;
-  const remaining = totalFineCredit - received / (rate / 1000);
+  const totalAmount = (totalFineCredit * rate) / 1000 + (totals.netLabour || 0);
+  // const remaining = totalFineCredit / (rate / 1000);
+  let remaining = totalFineCredit;
+  let remainingCash = totals.netLabour || 0;
 
+  if (received > 0) {
+    // Deduct labour first
+    remainingCash = Math.max(0, totals.netLabour - received);
+    // Remaining amount after labour is converted to silver
+    const remainingAfterLabour = Math.max(0, received - totals.netLabour);
+    const silverReceived = remainingAfterLabour / (rate / 1000);
+    remaining = totalFineCredit - silverReceived;
+  }
 
   const [billId, setBillId] = useState(0);
 
@@ -161,6 +198,10 @@ const CreateBill = () => {
   //   }
   // }, [billId]);
   const handleSubmit = async (e) => {
+   if (rate <= 0 || !rate) {
+    alert("Please fill rate");
+    return;
+  }
     e.preventDefault();
     setSubmit(true);
 
@@ -176,6 +217,7 @@ const CreateBill = () => {
       totalAmount,
       received,
       remaining,
+      remainingCash,
       profitRupees,
       profitSilver
     };
@@ -197,6 +239,10 @@ const CreateBill = () => {
       if (response.ok) {
         alert(`Bill added successfully! Bill ID: ${data.billId}`);
         setBillId(data.billId); // 🟢 Set the returned billId
+        setClosingBalance({
+          fineBalance: data.fineBalance || 0,
+          cashBalance: data.cashBalance || 0,
+        });
         setSubmit(false);
         // setBillAdded(false);
         setIsBillReady(true);
@@ -232,6 +278,12 @@ const CreateBill = () => {
 
     return acc + (sellVal - actualVal);
   }, 0);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Filtered items based on search
+  const filteredStocks = stocks.filter((stock) =>
+    stock.itemName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
 
 
@@ -258,12 +310,51 @@ const CreateBill = () => {
           <h3 className="font-bold">Add Item</h3>
 
           <div className="d-flex flex-column mb-5">
+            <div className="d-flex flex-column mb-5">
+              <input
+                type="text"
+                list="stockOptions"
+                placeholder="Search or select item..."
+                value={newItem.itemName}
+                onChange={(e) => {
+                  setNewItem({ ...newItem, itemName: e.target.value });
+                  const item = stocks.find((i) => i.itemName === e.target.value);
+                  if (item) {
+                    setNewItem({
+                      ...item,
+                      sellTunch: item.sellTunch,
+                      poly: item.poly,
+                      pcs: "",
+                      grossWeight: "",
+                    });
+                  }
+                }}
+                className="border p-2 mb-2"
+              />
+
+              {/* Datalist acts like dropdown + search */}
+              <datalist id="stockOptions">
+                {stocks.map((stock) => (
+                  <option key={stock._id} value={stock.itemName} />
+                ))}
+              </datalist>
+            </div>
+
+            {/* <input
+              type="text"
+              placeholder="Search Item..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="border p-2 mb-2"
+            />
+
             <select onChange={handleItemNameChange} className="border p-2 w-full">
               <option>Select Item</option>
-              {stocks.map((stock) => (
+              {filteredStocks.map((stock) => (
                 <option key={stock._id}>{stock.itemName}</option>
               ))}
-            </select>
+            </select> */}
+
             <div className="d-flex flex-wrap p-1">
               <div className="m-1">
                 <label>Vendor</label>
@@ -405,34 +496,34 @@ const CreateBill = () => {
         <div>Total labour: ₹{totals.netLabour.toFixed(2)}</div>
       </div>
       <div>
-  <h3 className="font-bold mt-4">Kachhi Details</h3>
-  {kachis.map((k, index) => (
-    <div key={index} className="flex gap-2 mb-2">
-      <input
-        type="number"
-        placeholder="Weight"
-        value={k.kachiwt}
-        onChange={(e) => handleKachhiChange(index, 'kachiwt', e.target.value)}
-        className="border p-2"
-      />
-      <input
-        type="number"
-        placeholder="Tunch"
-        value={k.kachiTunch}
-        onChange={(e) => handleKachhiChange(index, 'kachiTunch', e.target.value)}
-        className="border p-2"
-      />
-      <input
-        type="number"
-        value={k.kachiFine.toFixed(2)}
-        disabled
-        className="border p-2"
-        placeholder="Fine"
-      />
-    </div>
-  ))}
-  <button onClick={addKachhi} className="btn btn-outline btn-sm text-blue-600">+ Add Kachhi</button>
-</div>
+        <h3 className="font-bold mt-4">Kachhi Details</h3>
+        {kachis.map((k, index) => (
+          <div key={index} className="flex gap-2 mb-2">
+            <input
+              type="number"
+              placeholder="Weight"
+              value={k.kachiwt}
+              onChange={(e) => handleKachhiChange(index, 'kachiwt', e.target.value)}
+              className="border p-2"
+            />
+            <input
+              type="number"
+              placeholder="Tunch"
+              value={k.kachiTunch}
+              onChange={(e) => handleKachhiChange(index, 'kachiTunch', e.target.value)}
+              className="border p-2"
+            />
+            <input
+              type="number"
+              value={k.kachiFine.toFixed(2)}
+              disabled
+              className="border p-2"
+              placeholder="Fine"
+            />
+          </div>
+        ))}
+        <button onClick={addKachhi} className="btn btn-outline btn-sm text-blue-600">+ Add Kachhi</button>
+      </div>
 
       {/* <div className="kacchidiv bg-light d-flex justify-content-between">
         <div classname="d-flex flex-column bg-dark">
@@ -455,9 +546,25 @@ const CreateBill = () => {
           <label>Received </label>
           <input type="number" placeholder="Received" onChange={(e) => setReceived(e.target.value)} className="border p-2" required />
         </div>
-        <input type="text" value={`Remaining: ${remaining.toFixed(2)}`} disabled className="border p-2" required />
+        <input type="text" value={`Remaining Fine: ${remaining.toFixed(2)}`} disabled className="border p-2" required />
+      </div>
+      <div className="lastBalanceDiv bg-light d-flex justify-content-between mt-3 p-2">
+        <div className="border mx-2 p-2">
+          Fine Balance: {lastBalance.fineBalance !== null ? lastBalance.fineBalance.toFixed(2) : 'N/A'}
+        </div>
+        <div className="border mx-2 p-2">
+          Cash Balance: ₹{lastBalance.cashBalance !== null ? lastBalance.cashBalance.toFixed(2) : 'N/A'}
+        </div>
       </div>
 
+      <div className="closingBalanceDiv bg-light d-flex justify-content-between mt-3 p-2">
+        <div className="border mx-2 p-2">
+          Updated Fine Balance: {closingBalance.fineBalance !== null ? closingBalance.fineBalance.toFixed(2) : 'N/A'}
+        </div>
+        <div className="border mx-2 p-2">
+          Updated Cash Balance: ₹{closingBalance.cashBalance !== null ? closingBalance.cashBalance.toFixed(2) : 'N/A'}
+        </div>
+      </div>
 
       <button onClick={handleSubmit} className="btn btn-primary text-white px-4 py-2 mt-4" disabled={submit}>Submit</button>
       <div className="w-100 d-flex">
@@ -489,6 +596,10 @@ const CreateBill = () => {
           totalAmount={totalAmount}
           received={received}
           remaining={remaining}
+          closingFine={closingBalance.fineBalance}
+          closingCash={closingBalance.cashBalance}
+          lastFine={lastBalance.fineBalance}
+          lastCash={lastBalance.cashBalance}
         />
       </div>
       {isBillReady && (
@@ -507,6 +618,11 @@ const CreateBill = () => {
               totalAmount={totalAmount}
               received={received}
               remaining={remaining}
+              closingFine={closingBalance.fineBalance}
+              closingCash={closingBalance.cashBalance}
+              lastFine={lastBalance.fineBalance}
+              lastCash={lastBalance.cashBalance}
+
             />
           </div>
           <button onClick={handlePrint} className="btn btn-success mt-4">

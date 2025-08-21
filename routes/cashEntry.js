@@ -26,11 +26,20 @@ router.post('/addcashentry', async (req, res) => {
         };
 
         // Update the retailer document with the new cash entry
-        await Retailer.updateOne(
+          const updateResult = await Retailer.updateOne(
             { name },
-            { $push: { cashEntries: cashEntry } }
+            { 
+                $push: { cashEntries: cashEntry },
+                $inc: { cashBalance: amount }
+            }
         );
-
+        // await Retailer.updateOne(
+        //     { name },
+        //     { $push: { cashEntries: cashEntry } }
+        // );
+  if (updateResult.modifiedCount === 0) {
+            return res.status(500).json({ message: "Failed to add cash entry." });
+        }
         res.status(200).json({ message: "Cash entry added successfully.", cashEntry });
 
     } catch (err) {
