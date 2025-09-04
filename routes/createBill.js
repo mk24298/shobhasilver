@@ -53,33 +53,47 @@ router.post("/create-bill", async (req, res) => {
     const newBillId = lastBillId + 1;
 
     // 2. Subtract stock
-    for (const item of bill.items) {
-      const stockId = item._id;
-      const stock = await Stock.findOne({ _id: new mongoose.Types.ObjectId(stockId) });
+    // ------------------
+// Pass 1: Check stock availability
+// ------------------
+for (const item of bill.items) {
+  const stock = await Stock.findOne({ _id: new mongoose.Types.ObjectId(item._id) });
 
-      if (!stock) {
-        return res.status(404).json({ message: `Stock item not found for ID: ${stockId}` });
-      }
+  if (!stock) {
+    return res.status(404).json({ message: `Stock item not found for ID: ${item._id}` });
+  }
 
-      const updatedGross = parseFloat(stock.grossWeight) - parseFloat(item.grossWeight);
-      const updatedNet = parseFloat(stock.netWeight) - parseFloat(item.netWeight);
-      const updatedPcs = parseFloat(stock.pcs) - parseFloat(item.pcs);
+  const updatedPcs = parseFloat(stock.pcs) - parseFloat(item.pcs);
+  if (updatedPcs < 0) {
+    return res.status(400).json({ message: `Not enough stock for item: ${item.itemName}` });
+  }
+}
 
-      if (updatedPcs < 0) {
-        return res.status(400).json({ message: `Not enough stock for item: ${item.itemName}` });
-      }
+// ------------------
+// Pass 2: Deduct stock (only if all passed)
+// ------------------
+for (const item of bill.items) {
+  const stock = await Stock.findOne({ _id: new mongoose.Types.ObjectId(item._id) });
 
-      await Stock.updateOne(
-        { _id: new mongoose.Types.ObjectId(stockId) },
-        {
-          $set: {
-            grossWeight: updatedGross.toFixed(2),
-            netWeight: updatedNet.toFixed(2),
-            pcs: updatedPcs.toFixed(0),
-          },
-        }
-      );
+  const updatedGross = parseFloat(stock.grossWeight) - parseFloat(item.grossWeight);
+  const updatedNet = parseFloat(stock.netWeight) - parseFloat(item.netWeight);
+  const updatedPcs = parseFloat(stock.pcs) - parseFloat(item.pcs);
+
+  await Stock.updateOne(
+    { _id: new mongoose.Types.ObjectId(item._id) },
+    {
+      $set: {
+        grossWeight: updatedGross.toFixed(2),
+        netWeight: updatedNet.toFixed(2),
+        pcs: updatedPcs.toFixed(0),
+      },
     }
+  );
+}
+
+    
+
+
 
     // 3. Add new bill with generated billId
     const finalBill = { ...bill, billId: newBillId };
