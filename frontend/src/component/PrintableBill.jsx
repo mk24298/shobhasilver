@@ -231,7 +231,7 @@ const PrintableBill = ({
       {/* Optional Footer */}
 
       <h6 className="mt-4 text-muted text-center">
-        Thank you for your business!
+       कृपया 12 से 15 दिनों में अपना पर्चा नया करा लें !
       </h6>
     </div>
   );
