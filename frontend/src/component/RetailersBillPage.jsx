@@ -120,6 +120,18 @@ const RetailerBillsPage = () => {
             alert("Failed to delete the bill.");
         }
     };
+    const message = `*आदरणीय रिटेलर*,  
+आपका क्लोज़िंग बैलेंस *${fineBalance.toFixed(2)}gm* एवं *₹ ${cashBalance.toFixed(2)}* है।  
+
+कृपया समय निकालकर दुकान पर पधारें, नया माल छाँटें और हिसाब नया करें,  
+ताकि हमारा लेखा व्यवस्थित रहे और सेवा में निरंतरता बनी रहे।  
+
+आपका सहयोग और विश्वास हमारे लिए अत्यंत महत्वपूर्ण है।  
+
+*शोभा सिल्वर*  
+*नवाबगंज, गोंडा*  
+
+(यह एक कंप्यूटर जनरेटेड ऑटो संदेश है)`;
 
     return (
         <div className="p-4">
@@ -129,7 +141,17 @@ const RetailerBillsPage = () => {
                 <br />
                 <strong>Cash Balance:</strong> Rs. {cashBalance}
             </div>
-            <a href={`https://wa.me/+91${phone}`} target='_blank'>Chat</a>
+            <div className=' d-flex flex-row justify-content-center my-2'>
+            <a  className="btn btn-primary mx-2" href={`https://wa.me/+91${phone}`} target='_blank'>Chat</a>
+            <a
+                href={`https://wa.me/91${phone}?text=${encodeURIComponent(message)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-success"
+            >
+                Send Reminder
+            </a>
+            </div>
             <div className="flex gap-4 mb-4">
                 <select className="border px-2 py-1" value={selectedRetailerName} onChange={(e) => setSelectedRetailerName(e.target.value)}>
                     <option value="">Select Retailer</option>
@@ -321,7 +343,7 @@ const RetailerBillsPage = () => {
                                     remaining={bill.remaining}
                                     closingFine={fineBalance}
                                     closingCash={cashBalance}
-                             
+
                                 />
                                 <p>Reprint</p>
                             </div>
