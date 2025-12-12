@@ -6,6 +6,7 @@ import DisplayStocks from './DisplayStocks';
 import RetailerBillsPage from './RetailersBillPage';
 import CreateRetailerForm from './CreateRetailer';
 import UpdateStockForm from './UpdateStockForm';
+import JaakadFrontend from './JaakadPage';
 
 
 export default function Admin() {
@@ -30,6 +31,9 @@ export default function Admin() {
   };
   const handleUpdateStock = () => {
     setView('updatestock');
+  };
+  const handleJaakad = () => {
+    setView('jaakad');
   };
   const handleDownload = async () => {
     try {
@@ -102,6 +106,13 @@ export default function Admin() {
         <button onClick={handleDownload}  className="btn btn-dark mx-2">
           Download
         </button>
+         <button
+          className="btn btn-warning mx-2"
+          onClick={handleJaakad}
+          disabled={view === 'jaakad'}
+        >
+          Jaakad
+        </button>
       </div>
       {view === 'createbill' && <CreateBill />}
       {view === 'credit' && <RetailerBillsPage />}
@@ -109,7 +120,7 @@ export default function Admin() {
       {view === 'entry' && <AddStockForm />}
       {view === 'newretailer' && <CreateRetailerForm />}
       {view === 'updatestock' && <UpdateStockForm />}
-
+{view === 'jaakad' && <JaakadFrontend/>}
 
 
     </div>
