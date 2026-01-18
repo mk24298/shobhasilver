@@ -211,7 +211,7 @@ export default function RouteDashboard() {
           </div>
         )}
         <h3>Retailers List</h3>
-<div className="d-flex flex-row">
+<div className="d-flex flex-row flex-wrap">
 {retailers.map(r => (
           <RetailerCard
           key={r.retailerId}
