@@ -37,6 +37,7 @@ app.use("/api", require("./routes/cashEntry"));
 app.use("/api", require("./routes/retailerInfo"));
 app.use("/api", require("./routes/jaakad"));
 
+app.use("/api/routes", require("./routes/routes"));
 
 
 

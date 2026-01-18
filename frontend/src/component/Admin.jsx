@@ -8,7 +8,7 @@ import CreateRetailerForm from './CreateRetailer';
 import UpdateStockForm from './UpdateStockForm';
 import JaakadFrontend from './JaakadPage';
 
-
+import RouteDashboard from './RouteDashboard';
 export default function Admin() {
   const [view, setView] = useState('createbill'); // 'search', 'all', or 'sales'
 
@@ -34,6 +34,9 @@ export default function Admin() {
   };
   const handleJaakad = () => {
     setView('jaakad');
+  };
+  const handleRoute = () => {
+    setView('route');
   };
   const handleDownload = async () => {
     try {
@@ -106,6 +109,13 @@ export default function Admin() {
         <button onClick={handleDownload}  className="btn btn-dark mx-2">
           Download
         </button>
+        <button
+          className="btn btn-warning mx-2"
+          onClick={handleRoute}
+          disabled={view === 'route'}
+        >
+          Route
+        </button>
          <button
           className="btn btn-warning mx-2"
           onClick={handleJaakad}
@@ -121,7 +131,7 @@ export default function Admin() {
       {view === 'newretailer' && <CreateRetailerForm />}
       {view === 'updatestock' && <UpdateStockForm />}
 {view === 'jaakad' && <JaakadFrontend/>}
-
+{view === 'route' && <RouteDashboard/>}
 
     </div>
   );

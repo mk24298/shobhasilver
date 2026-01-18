@@ -6,7 +6,7 @@ import React, { useEffect, useState } from "react";
 
 const API_BASE = "https://shobhasilverst.onrender.com"; // change if needed
 
-const emptyLine = () => ({ stockId: "", itemName: "", gross: "", pcs: "" });
+const emptyLine = () => ({ stockId: "", itemName: "", gross: "", pcs: 1, poly: "" });
 
 function formatFixed(n) {
   return Number(n || 0).toFixed(2);
@@ -84,6 +84,7 @@ export default function JaakadPageV2() {
     fetch(API_BASE + "/api/getretailers").then(r => r.json()).then(d => setRetailers(Array.isArray(d) ? d : (d.retailers || d)));
     fetch(API_BASE + "/api/getstocks").then(r => r.json()).then(d => setStocks(Array.isArray(d) ? d : (d.stocks || d || [])));
     loadJaakads();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadJaakads = async () => {
@@ -99,9 +100,11 @@ export default function JaakadPageV2() {
     }
   };
 
+  // when item is selected, prefill poly (editable) and set other defaults
   const onSelectStock = (stock) => {
     setSelectedItem(stock);
-    setLine({ stockId: stock._id, itemName: stock.itemName, gross: "", pcs: 1 });
+    const prePoly = (stock && stock.poly) ? String(stock.poly) : "";
+    setLine({ stockId: stock._id, itemName: stock.itemName, gross: "", pcs: 1, poly: prePoly });
   };
 
   const addLine = () => {
@@ -109,7 +112,18 @@ export default function JaakadPageV2() {
     if (!line.itemName) return alert("Select item");
     if (!line.gross || Number(line.gross) <= 0) return alert("Enter gross weight");
     if (!line.pcs || Number(line.pcs) <= 0) return alert("Enter pcs");
-    setLines(prev => [...prev, { ...line }]);
+
+    // use user-edited poly if provided, otherwise fallback to stock poly
+    const stockObj = stocks.find(s => s._id === line.stockId) || {};
+    const polyPerPiece = Number((line.poly !== "" ? line.poly : (stockObj.poly || 0)));
+
+    // compute net as: gross - (polyPerPiece * pcs)
+    const gross = Number(line.gross);
+    const pcs = Number(line.pcs);
+    const totalPoly = polyPerPiece * pcs;
+    const net = Math.max(0, gross - totalPoly);
+
+    setLines(prev => [...prev, { ...line, poly: polyPerPiece, net }]);
     setLine(emptyLine());
     setSelectedItem(null);
   };
@@ -118,18 +132,36 @@ export default function JaakadPageV2() {
     setLines(prev => prev.filter((_, i) => i !== idx));
   };
 
+  // submit jaakad - include poly & net for each item
   const submitJaakad = async () => {
     if (!retailerId) return alert("Select retailer");
     if (!lines.length) return alert("Add items");
     setBusy(true);
     try {
       const r = retailers.find(x => Number(x.retailerId) === Number(retailerId));
+      // prepare items: ensure poly and net are present (fallback to stock lookup if missing)
+      const payloadItems = lines.map(l => {
+        const stockObj = stocks.find(s => s._id === l.stockId) || {};
+        const polyPerPiece = Number(((l.poly !== "" ? l.poly : (stockObj.poly || 0)) || 0));
+        const pcs = Number(l.pcs || 0);
+        const gross = Number(l.gross || 0);
+        const net = Number((l.net ?? Math.max(0, gross - (polyPerPiece * pcs))) || 0);
+        return {
+          stockId: l.stockId || null,
+          itemName: l.itemName,
+          weight: gross,
+          pcs,
+          poly: polyPerPiece,
+          net
+        };
+      });
+
       const payload = {
         retailerId: Number(retailerId),
         retailerName: r?.name || "",
         retailerPhone: r?.phone || "",
         date,
-        items: lines.map(it => ({ stockId: it.stockId || null, itemName: it.itemName, weight: Number(it.gross), pcs: Number(it.pcs) }))
+        items: payloadItems
       };
       const res = await fetch(API_BASE + "/api/jaakad", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const data = await res.json();
@@ -147,15 +179,26 @@ export default function JaakadPageV2() {
 
   const sendWhatsApp = (jaakad) => {
     const header = `आदरणीय ${jaakad.retailerName || ""},\nआपने निम्न आइटम हमारी दुकान से लिए हैं (${jaakad.date}):\n`;
-    const items = (jaakad.initialItems || []).map(it => `- ${it.itemName} ${formatFixed(it.weight)} g × ${it.pcs} pcs`).join("\n");
-    const total = (jaakad.initialItems || []).reduce((s, it) => s + (Number(it.weight) || 0), 0);
-    const tail = `\nकृपया संभालकर रखें।\nकुल: ${formatFixed(total)} g\n\nशोभा सिल्वर, नवाबगंज, गोंडा`;
+    const items = (jaakad.initialItems || []).map(it => {
+      const poly = (it.poly ?? lookupPoly(it.stockId)) ?? 0;
+      const net = (it.net !== undefined) ? it.net : (Number(it.weight || 0) - (Number(poly || 0) * Number(it.pcs || 0)));
+      return `- ${it.itemName} | Gross: ${formatFixed(it.weight)} g | Poly: ${formatFixed(poly)} g | Net: ${formatFixed(net)} g × ${it.pcs} pcs`;
+    }).join("\n");
+    const totalGross = (jaakad.initialItems || []).reduce((s, it) => s + Number(it.weight || 0), 0);
+    const totalPoly = (jaakad.initialItems || []).reduce((s, it) => s + (Number(((it.poly ?? lookupPoly(it.stockId)) ?? 0) * Number(it.pcs || 0))), 0);
+    const totalNet = totalGross - totalPoly;
+    const tail = `\nकृपया संभालकर रखें।\nकुल: Gross ${formatFixed(totalGross)} g | Poly ${formatFixed(totalPoly)} g | Net ${formatFixed(totalNet)} g\n\nशोभा सिल्वर, नवाबगंज, गोंडा`;
     const msg = header + items + tail;
     if (!jaakad.retailerPhone) return alert("Phone not found");
     window.open(`https://wa.me/91${jaakad.retailerPhone}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
-  // OPEN RETURN: fetch fresh jaakad and prepare return inputs
+  function lookupPoly(stockId) {
+    const s = stocks.find(x => x._id === stockId) || {};
+    return Number(s.poly || 0);
+  }
+
+  // OPEN RETURN: fetch fresh jaakad and prepare return inputs with poly/net shown
   const openReturn = async (jaakad) => {
     setBusy(true);
     try {
@@ -163,15 +206,23 @@ export default function JaakadPageV2() {
       const data = await res.json();
       const doc = data.jaakad;
       setActiveJaakad(doc);
-      // prepare return inputs per initial item
-      const inputs = (doc.initialItems || []).map(it => ({
-        stockId: it.stockId,
-        itemName: it.itemName,
-        origWeight: Number(it.weight || 0),
-        origPcs: Number(it.pcs || 0),
-        returnWeight: 0,
-        returnPcs: 0
-      }));
+      // prepare return inputs per initial item (include poly and net values)
+      const inputs = (doc.initialItems || []).map(it => {
+        const polyPerPiece = Number(((it.poly ?? lookupPoly(it.stockId)) ?? 0));
+        const gross = Number(it.weight || 0);
+        const pcs = Number(it.pcs || 0);
+        const net = Number((it.net ?? Math.max(0, gross - (polyPerPiece * pcs))) ?? 0);
+        return {
+          stockId: it.stockId,
+          itemName: it.itemName,
+          origWeight: gross,
+          origPcs: pcs,
+          origPolyPerPiece: polyPerPiece,
+          origNet: net,
+          returnWeight: 0,
+          returnPcs: 0
+        };
+      });
       setReturnInputs(inputs);
       // clear modal remaining cache
       setRemainingForModal(data.remaining || null);
@@ -193,8 +244,6 @@ export default function JaakadPageV2() {
   };
 
   // SUBMIT RETURN:
-  // - include optional remark in body
-  // - use returned 'data.remaining' from server response to update modal immediately
   const submitReturn = async () => {
     if (!activeJaakad) return;
     const returned = returnInputs
@@ -212,7 +261,7 @@ export default function JaakadPageV2() {
       const body = {
         date: new Date().toISOString().slice(0, 10),
         returnedItems: returned,
-        remark: returnRemark?.trim() || ""
+        remark: (returnRemark || "").trim()
       };
       const res = await fetch(`${API_BASE}/api/jaakad/${activeJaakad.jaakadId}/return`, {
         method: "POST",
@@ -222,32 +271,33 @@ export default function JaakadPageV2() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Return failed");
 
-      // data.jaakad is updated jaakad doc; data.remaining is computed remaining
       alert("Return recorded");
 
       // update modal state using server data (no stale reads)
       setActiveJaakad(data.jaakad || activeJaakad);
       setRemainingForModal(data.remaining || null);
-
-      // increment refresh key so RemainingBlock can refetch if needed
       setRemainingRefreshKey(k => k + 1);
-
-      // reload list on background
       loadJaakads();
-      // reset return inputs so user can re-enter if needed
-      const freshInputs = (data.jaakad?.initialItems || []).map(it => ({
-        stockId: it.stockId,
-        itemName: it.itemName,
-        origWeight: Number(it.weight || 0),
-        origPcs: Number(it.pcs || 0),
-        returnWeight: 0,
-        returnPcs: 0
-      }));
+
+      // reset return inputs from updated jaakad
+      const freshInputs = (data.jaakad?.initialItems || []).map(it => {
+        const polyPerPiece = Number(((it.poly ?? lookupPoly(it.stockId)) ?? 0));
+        const gross = Number(it.weight || 0);
+        const pcs = Number(it.pcs || 0);
+        const net = Number((it.net ?? Math.max(0, gross - (polyPerPiece * pcs))) ?? 0);
+        return {
+          stockId: it.stockId,
+          itemName: it.itemName,
+          origWeight: gross,
+          origPcs: pcs,
+          origPolyPerPiece: polyPerPiece,
+          origNet: net,
+          returnWeight: 0,
+          returnPcs: 0
+        };
+      });
       setReturnInputs(freshInputs);
-
-      // clear remark input
       setReturnRemark("");
-
     } catch (err) {
       console.error(err);
       alert("Error: " + (err.message || "unknown"));
@@ -260,7 +310,6 @@ export default function JaakadPageV2() {
     if (!activeJaakad) return;
     setBusy(true);
     try {
-      // fetch remaining via API (ensures we have latest)
       const resJ = await fetch(`${API_BASE}/api/jaakad/${activeJaakad.jaakadId}`);
       const d = await resJ.json();
       const remaining = d.remaining || [];
@@ -319,9 +368,9 @@ export default function JaakadPageV2() {
   };
 
   const statusColor = (s) => {
-    if (s === "open") return { background: "#42f54eff", color: "#000" };
+    if (s === "open") return { background: "#f5c542", color: "#000" };
     if (s === "partially_returned") return { background: "#f39c12", color: "#fff" };
-    if (s === "closed") return { background: "#cc2e2eff", color: "#fff" };
+    if (s === "closed") return { background: "#2ecc71", color: "#fff" };
     if (s === "carryforward") return { background: "#3498db", color: "#fff" };
     return { background: "#95a5a6", color: "#fff" };
   };
@@ -337,6 +386,25 @@ export default function JaakadPageV2() {
     }
     return true;
   });
+
+  // helper to compute totals for a jaakad (handles missing poly/net by lookup)
+  function computeTotalsForJaakad(j) {
+    const items = j.initialItems || [];
+    let gross = 0;
+    let polySum = 0;
+    let net = 0;
+    for (const it of items) {
+      const w = Number(it.weight || 0);
+      const pcs = Number(it.pcs || 0);
+      const polyPer = Number(((it.poly ?? lookupPoly(it.stockId)) ?? 0));
+      const itemPoly = polyPer * pcs;
+      const itemNet = (it.net !== undefined) ? Number(it.net) : Math.max(0, w - itemPoly);
+      gross += w;
+      polySum += itemPoly;
+      net += itemNet;
+    }
+    return { gross, poly: polySum, net };
+  }
 
   return (
     <div className="p-4">
@@ -359,7 +427,8 @@ export default function JaakadPageV2() {
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-3 mt-3">
+        {/* grid-cols-5 to include editable poly */}
+        <div className="grid grid-cols-5 gap-3 mt-3">
           <div>
             <label className="block text-sm">Search item</label>
             <SearchableSelect items={stocks} value={selectedItem} onChange={onSelectStock} placeholder="Type to search item..." />
@@ -368,10 +437,23 @@ export default function JaakadPageV2() {
             <label className="block text-sm">Gross (g)</label>
             <input type="number" value={line.gross} onChange={e => setLine({ ...line, gross: e.target.value })} className="border p-1 w-full" />
           </div>
+
+          <div>
+            <label className="block text-sm">Poly / piece (g)</label>
+            <input
+              type="number"
+              value={line.poly}
+              onChange={e => setLine({ ...line, poly: e.target.value })}
+              className="border p-1 w-full"
+              placeholder="prefilled from item (editable)"
+            />
+          </div>
+
           <div>
             <label className="block text-sm">PCS</label>
             <input type="number" value={line.pcs} onChange={e => setLine({ ...line, pcs: e.target.value })} className="border p-1 w-full" />
           </div>
+
           <div className="flex gap-2 items-center">
             <button onClick={addLine} className="bg-blue-600 text-white px-3 py-1 rounded">Add</button>
             <button onClick={() => { setLine(emptyLine()); setSelectedItem(null); }} className="border px-3 py-1 rounded">Clear</button>
@@ -380,23 +462,43 @@ export default function JaakadPageV2() {
 
         <div className="mt-3">
           <table className="w-full border">
-            <thead><tr className="bg-gray-100"><th>#</th><th>Item</th><th>Gross (g)</th><th>PCS</th><th>Action</th></tr></thead>
+            <thead><tr className="bg-gray-100"><th>#</th><th>Item</th><th>Gross (g)</th><th>Poly/piece (g)</th><th>Net (g)</th><th>PCS</th><th>Action</th></tr></thead>
             <tbody>
-              {lines.map((l, i) => (
-                <tr key={i}>
-                  <td className="p-2 border">{i + 1}</td>
-                  <td className="p-2 border">{l.itemName}</td>
-                  <td className="p-2 border">{formatFixed(l.gross)}</td>
-                  <td className="p-2 border">{l.pcs}</td>
-                  <td className="p-2 border"><button onClick={() => removeLine(i)} className="text-red-600">Remove</button></td>
-                </tr>
-              ))}
-              {lines.length === 0 && <tr><td colSpan={5} className="p-2 text-center text-gray-500">No items</td></tr>}
+              {lines.map((l, i) => {
+                const polyPer = Number((l.poly !== "" ? l.poly : lookupPoly(l.stockId)) || 0);
+                const pcs = Number(l.pcs || 0);
+                const gross = Number(l.gross || 0);
+                const net = Number((l.net ?? Math.max(0, gross - (polyPer * pcs))) || 0);
+                return (
+                  <tr key={i}>
+                    <td className="p-2 border">{i + 1}</td>
+                    <td className="p-2 border">{l.itemName}</td>
+                    <td className="p-2 border">{formatFixed(gross)}</td>
+                    <td className="p-2 border">{formatFixed(polyPer)}</td>
+                    <td className="p-2 border">{formatFixed(net)}</td>
+                    <td className="p-2 border">{l.pcs}</td>
+                    <td className="p-2 border"><button onClick={() => removeLine(i)} className="text-red-600">Remove</button></td>
+                  </tr>
+                );
+              })}
+              {lines.length === 0 && <tr><td colSpan={7} className="p-2 text-center text-gray-500">No items</td></tr>}
             </tbody>
           </table>
 
           <div className="mt-2">
-            <strong>Total Gross:</strong> {formatFixed(lines.reduce((s, l) => s + (Number(l.gross) || 0), 0))} g
+            <strong>Total Gross:</strong> {formatFixed(lines.reduce((s, l) => s + (Number(l.gross) || 0), 0))} g &nbsp; | &nbsp;
+            <strong>Total Poly:</strong> {formatFixed(lines.reduce((s, l) => {
+              const polyPer = Number((l.poly !== "" ? l.poly : lookupPoly(l.stockId)) || 0);
+              const pcs = Number(l.pcs || 0);
+              return s + (polyPer * pcs);
+            }, 0))} g &nbsp; | &nbsp;
+            <strong>Total Net:</strong> {formatFixed(lines.reduce((s, l) => {
+              const polyPer = Number((l.poly !== "" ? l.poly : lookupPoly(l.stockId)) || 0);
+              const pcs = Number(l.pcs || 0);
+              const gross = Number(l.gross || 0);
+              const net = Number((l.net ?? Math.max(0, gross - (polyPer * pcs))) || 0);
+              return s + net;
+            }, 0))} g
           </div>
 
           <div className="mt-3 flex gap-2">
@@ -406,9 +508,18 @@ export default function JaakadPageV2() {
               if (!lines.length) return alert("Add items");
               const r = retailers.find(x => Number(x.retailerId) === Number(retailerId));
               const msgHead = `आदरणीय ${r?.name || ""},\nआपने निम्न आइटम हमारी दुकान से लिए हैं (${date}):\n`;
-              const items = lines.map(it => `- ${it.itemName} ${formatFixed(it.gross)} g × ${it.pcs} pcs`).join("\n");
-              const total = lines.reduce((s, it) => s + (Number(it.gross) || 0), 0);
-              const tail = `\nकृपया संभालें।\nकुल: ${formatFixed(total)} g\n\nशोभा सिल्वर, नवाबगंज`;
+              const items = lines.map(it => {
+                const poly = ((it.poly !== "" ? it.poly : lookupPoly(it.stockId)) ?? 0);
+                const net = it.net ?? (Number(it.gross || 0) - (poly * Number(it.pcs || 0)));
+                return `- ${it.itemName} | Gross: ${formatFixed(Number(it.gross||0))} g | Poly/piece: ${formatFixed(poly)} g | Net: ${formatFixed(net)} g × ${it.pcs} pcs`;
+              }).join("\n");
+              const totalGross = lines.reduce((s, it) => s + Number(it.gross || 0), 0);
+              const totalPoly = lines.reduce((s, it) => {
+                const polyPer = ((it.poly !== "" ? it.poly : lookupPoly(it.stockId)) ?? 0);
+                return s + (Number(polyPer) * Number(it.pcs || 0));
+              }, 0);
+              const totalNet = totalGross - totalPoly;
+              const tail = `\nकृपया संभालें।\nकुल: Gross ${formatFixed(totalGross)} g | Poly ${formatFixed(totalPoly)} g | Net ${formatFixed(totalNet)} g\n\nशोभा सिल्वर, नवाबगंज`;
               window.open(`https://wa.me/91${r?.phone}?text=${encodeURIComponent(msgHead + items + tail)}`, "_blank");
             }} className="bg-sky-600 text-white px-3 py-1 rounded">Send on WhatsApp</button>
           </div>
@@ -461,70 +572,102 @@ export default function JaakadPageV2() {
             <div className="text-gray-600 p-2">No jaakads match the selected filter(s).</div>
           )}
 
-          {filteredJaakads.map(j => (
-            <div key={j.jaakadId} className="p-3 border rounded">
-              <div className="flex justify-between items-start">
-                <div>
-                  <strong>{j.retailerName}</strong> <div className="text-sm text-gray-600">date: {j.date}</div>
+          {filteredJaakads.map(j => {
+            const totals = computeTotalsForJaakad(j);
+            return (
+              <div key={j.jaakadId} className="p-3 border rounded">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <strong>{j.retailerName}</strong> <div className="text-sm text-gray-600">date: {j.date}</div>
+                  </div>
+                  <div style={{ padding: "4px 8px", borderRadius: 6, ...statusColor(j.status) }}>
+                    {j.status?.toUpperCase()}
+                  </div>
                 </div>
-                <div style={{ padding: "4px 8px", borderRadius: 6, ...statusColor(j.status) }}>
-                  {j.status?.toUpperCase()}
-                </div>
-              </div>
 
-              {/* Remarks display (if any) */}
-              {(j.remarks || []).length > 0 && (
+                {/* Remarks display (if any) */}
+                {(j.remarks || []).length > 0 && (
+                  <div className="mt-2">
+                    <strong>Remarks:</strong>
+                    <ul className="text-sm">
+                      {j.remarks.map((rm, idx) => (
+                        <li key={idx} className="text-gray-700">
+                          <span className="text-xs text-gray-500 mr-2">[{rm.date || rm._id || idx}]</span>
+                          {rm.text || rm}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 <div className="mt-2">
-                  <strong>Remarks:</strong>
-                  <ul className="text-sm">
-                    {j.remarks.map((rm, idx) => (
-                      <li key={idx} className="text-gray-700">
-                        <span className="text-xs text-gray-500 mr-2">[{rm.date || rm._id || idx}]</span>
-                        {rm.text || rm}
-                      </li>
-                    ))}
+                  <strong>Initial Items:</strong>
+                  <ul>
+                    {(j.initialItems || []).map((it, idx) => {
+                      const polyPer = Number(((it.poly ?? lookupPoly(it.stockId)) ?? 0));
+                      const gross = Number(it.weight || 0);
+                      const pcs = Number(it.pcs || 0);
+                      const net = Number((it.net ?? Math.max(0, gross - (polyPer * pcs))) ?? 0);
+                      return (
+                        <li key={idx}>
+                          {it.itemName} — Gross: {formatFixed(gross)} g | Poly/piece: {formatFixed(polyPer)} g | Net: {formatFixed(net)} g × {pcs} pcs
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
-              )}
 
-              <div className="mt-2">
-                <strong>Initial Items:</strong>
-                <ul>{(j.initialItems || []).map((it, idx) => (<li key={idx}>{it.itemName} — {formatFixed(it.weight)} g × {it.pcs} pcs</li>))}</ul>
-              </div>
+                <div className="mt-2">
+                  <strong>Totals:</strong>
+                  <div className="text-sm">Gross: {formatFixed(totals.gross)} g &nbsp; | &nbsp; Poly: {formatFixed(totals.poly)} g &nbsp; | &nbsp; Net: {formatFixed(totals.net)} g</div>
+                </div>
 
-              <div className="mt-2">
-                <strong>Returned:</strong>
-                {(j.returns || []).length === 0 ? <div className="text-sm text-gray-500">No returns</div> :
-                  <ul>{j.returns.map(r => (
-                    <li key={r.returnId} className="text-sm">{r.date} — {r.items.map(it => `${it.itemName} ${formatFixed(it.weight)}g × ${it.pcs}pcs`).join(", ")}</li>
-                  ))}</ul>
-                }
-              </div>
+                <div className="mt-2">
+                  <strong>Returned:</strong>
+                  {(j.returns || []).length === 0 ? <div className="text-sm text-gray-500">No returns</div> :
+                    <ul>{j.returns.map(r => (
+                      <li key={r.returnId} className="text-sm">{r.date} — {r.items.map(it => {
+                        const polyPer = Number(((it.poly ?? lookupPoly(it.stockId)) ?? 0));
+                        const net = Number((it.net ?? Math.max(0, Number(it.weight||0) - (polyPer * Number(it.pcs||0)))) ?? 0);
+                        return `${it.itemName} Gross:${formatFixed(it.weight)}g Poly:${formatFixed(polyPer)}g Net:${formatFixed(net)}g × ${it.pcs}pcs`;
+                      }).join(", ")}</li>
+                    ))}</ul>
+                  }
+                </div>
 
-              <div className="mt-2">
-                <strong>Billed (sold):</strong>
-                {(j.billed || []).length === 0 ? <div className="text-sm text-gray-500">None</div> :
-                  <ul>{j.billed.map(b => (
-                    <li key={b.billId} className="text-sm">{b.date} — {b.items.map(it => `${it.itemName} ${formatFixed(it.weight)}g × ${it.pcs}pcs`).join(", ")}</li>
-                  ))}</ul>
-                }
-              </div>
+                <div className="mt-2">
+                  <strong>Billed (sold):</strong>
+                  {(j.billed || []).length === 0 ? <div className="text-sm text-gray-500">None</div> :
+                    <ul>{j.billed.map(b => (
+                      <li key={b.billId} className="text-sm">{b.date} — {b.items.map(it => {
+                        const polyPer = Number(((it.poly ?? lookupPoly(it.stockId)) ?? 0));
+                        const net = Number((it.net ?? Math.max(0, Number(it.weight||0) - (polyPer * Number(it.pcs||0)))) ?? 0);
+                        return `${it.itemName} Gross:${formatFixed(it.weight)}g Poly:${formatFixed(polyPer)}g Net:${formatFixed(net)}g × ${it.pcs}pcs`;
+                      }).join(", ")}</li>
+                    ))}</ul>
+                  }
+                </div>
 
-              <div className="mt-2">
-                <strong>Carryforwards:</strong>
-                {(j.carryforwards || []).length === 0 ? <div className="text-sm text-gray-500">None</div> :
-                  <ul>{j.carryforwards.map(c => (
-                    <li key={c.cfId} className="text-sm">{c.date} — {c.items.map(it => `${it.itemName} ${formatFixed(it.weight)}g × ${it.pcs}pcs`).join(", ")}</li>
-                  ))}</ul>
-                }
-              </div>
+                <div className="mt-2">
+                  <strong>Carryforwards:</strong>
+                  {(j.carryforwards || []).length === 0 ? <div className="text-sm text-gray-500">None</div> :
+                    <ul>{j.carryforwards.map(c => (
+                      <li key={c.cfId} className="text-sm">{c.date} — {c.items.map(it => {
+                        const polyPer = Number(((it.poly ?? lookupPoly(it.stockId)) ?? 0));
+                        const net = Number((it.net ?? Math.max(0, Number(it.weight||0) - (polyPer * Number(it.pcs||0)))) ?? 0);
+                        return `${it.itemName} Gross:${formatFixed(it.weight)}g Poly:${formatFixed(polyPer)}g Net:${formatFixed(net)}g × ${it.pcs}pcs`;
+                      }).join(", ")}</li>
+                    ))}</ul>
+                  }
+                </div>
 
-              <div className="mt-3 flex gap-2">
-                <button onClick={() => sendWhatsApp(j)} className="bg-sky-500 text-white px-3 py-1 rounded">Send on WhatsApp</button>
-                <button onClick={() => openReturn(j)} className="bg-orange-500 text-white px-3 py-1 rounded">Return</button>
+                <div className="mt-3 flex gap-2">
+                  <button onClick={() => sendWhatsApp(j)} className="bg-sky-500 text-white px-3 py-1 rounded">Send on WhatsApp</button>
+                  <button onClick={() => openReturn(j)} className="bg-orange-500 text-white px-3 py-1 rounded">Return</button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -537,12 +680,14 @@ export default function JaakadPageV2() {
             <p className="text-sm text-gray-600">Enter returned qty for items (leave zero if not returned)</p>
 
             <table className="w-full border mb-3">
-              <thead><tr className="bg-gray-100"><th>Item</th><th>Orig Weight</th><th>Orig PCS</th><th>Return Weight</th><th>Return PCS</th></tr></thead>
+              <thead><tr className="bg-gray-100"><th>Item</th><th>Orig Gross</th><th>Poly/piece</th><th>Orig Net</th><th>Orig PCS</th><th>Return Weight</th><th>Return PCS</th></tr></thead>
               <tbody>
                 {returnInputs.map((r, idx) => (
                   <tr key={idx}>
                     <td className="p-2 border">{r.itemName}</td>
                     <td className="p-2 border">{formatFixed(r.origWeight)}</td>
+                    <td className="p-2 border">{formatFixed(r.origPolyPerPiece)}</td>
+                    <td className="p-2 border">{formatFixed(r.origNet)}</td>
                     <td className="p-2 border">{r.origPcs}</td>
                     <td className="p-2 border"><input className="border p-1 w-full" type="number" value={r.returnWeight} onChange={e => updateReturnInput(idx, 'returnWeight', e.target.value)} /></td>
                     <td className="p-2 border"><input className="border p-1 w-full" type="number" value={r.returnPcs} onChange={e => updateReturnInput(idx, 'returnPcs', e.target.value)} /></td>
@@ -604,6 +749,7 @@ function RemainingBlock({ jaakadId, initialRemaining = null, refreshKey = 0 }) {
       .then(r => r.json())
       .then(d => {
         if (!alive) return;
+        // d.remaining expected shape: [{ itemName, weight, pcs, poly?, net? }, ...]
         setRemaining(d.remaining || []);
       })
       .catch(e => {
@@ -616,5 +762,25 @@ function RemainingBlock({ jaakadId, initialRemaining = null, refreshKey = 0 }) {
 
   if (remaining === null) return <div>Loading remaining...</div>;
   if (!remaining.length) return <div className="text-sm text-gray-600">No remaining items</div>;
-  return <ul>{remaining.map((it, i) => (<li key={i}>{it.itemName} — {formatFixed(it.weight)} g × {it.pcs} pcs</li>))}</ul>;
+  // compute totals
+  const totalGross = remaining.reduce((s, it) => s + Number(it.weight || 0), 0);
+  const totalPoly = remaining.reduce((s, it) => s + (Number(it.poly || 0) * Number(it.pcs || 0) || 0), 0);
+  const totalNet = remaining.reduce((s, it) => {
+    const net = (it.net !== undefined) ? Number(it.net) : Math.max(0, Number(it.weight || 0) - (Number(it.poly || 0) * Number(it.pcs || 0)));
+    return s + net;
+  }, 0);
+  return (
+    <div>
+      <ul>
+        {remaining.map((it, i) => {
+          const polyPer = Number(it.poly || 0);
+          const net = (it.net !== undefined) ? Number(it.net) : Math.max(0, Number(it.weight || 0) - (polyPer * Number(it.pcs || 0)));
+          return <li key={i}>{it.itemName} — Gross: {formatFixed(it.weight)} g | Poly/piece: {formatFixed(polyPer)} g | Net: {formatFixed(net)} g × {it.pcs} pcs</li>;
+        })}
+      </ul>
+      <div className="mt-2 text-sm">
+        <strong>Totals:</strong> Gross {formatFixed(totalGross)} g &nbsp; | &nbsp; Poly {formatFixed(totalPoly)} g &nbsp; | &nbsp; Net {formatFixed(totalNet)} g
+      </div>
+    </div>
+  );
 }
