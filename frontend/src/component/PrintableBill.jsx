@@ -102,7 +102,7 @@ const PrintableBill = ({
         <div className="d-flex justify-content-start " style={{width:"max-content"}}><strong className="mx-2">Phone:</strong> {selectedRetailer?.phone || "-"}</div>
         </div>
         <div className="d-flex flex-column flex-row mx-3 " style={{width:"max-content"}}>
-        <div className="d-flex justify-content-start " style={{width:"max-content"}}><strong className="mx-2">Rate:</strong> ₹{rate}</div>
+        {/* <div className="d-flex justify-content-start " style={{width:"max-content"}}><strong className="mx-2">Rate:</strong> ₹{rate}</div> */}
         <div className="d-flex justify-content-start" style={{width:"max-content"}}><strong className="mx-2">Date:</strong> {new Date(date).toLocaleDateString()}</div>
         </div>
       </div>
@@ -181,7 +181,7 @@ const PrintableBill = ({
 
     <div className="valuediv bg-light d-flex justify-content-between mt-3 p-2">
   <div className="border mx-2 p-2">Total Fine Credit: {(totalFineCredit ?? 0).toFixed(2)}g</div>
-  <div className="border mx-2 p-2">Total Amount: ₹{(totalAmount ?? 0).toFixed(2)}</div>
+  {/* <div className="border mx-2 p-2">Total Amount: ₹{(totalAmount ?? 0).toFixed(2)}</div> */}
   <div className="border mx-2 p-2">Received: ₹{received ?? 0}</div>
   <div className="border mx-2 p-2">Remaining(Fine): {(remaining ?? 0).toFixed(2)}g</div>
 </div>
