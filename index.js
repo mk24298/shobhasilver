@@ -38,6 +38,10 @@ app.use("/api", require("./routes/retailerInfo"));
 app.use("/api", require("./routes/jaakad"));
 
 app.use("/api/routes", require("./routes/routes"));
+app.use("/api", require("./routes/retailerAnalysis"));
+app.use("/api", require("./routes/smartDashboard"));
+
+
 
 
 

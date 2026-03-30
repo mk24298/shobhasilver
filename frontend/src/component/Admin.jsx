@@ -9,6 +9,9 @@ import UpdateStockForm from './UpdateStockForm';
 import JaakadFrontend from './JaakadPage';
 
 import RouteDashboard from './RouteDashboard';
+import RetailerAnalysisPage from './RetailerAnalysisPage';
+// import SmartDashboard from './smartDashboard';
+import RealDashboard from './smartDashboard';
 export default function Admin() {
   const [view, setView] = useState('createbill'); // 'search', 'all', or 'sales'
 
@@ -37,6 +40,12 @@ export default function Admin() {
   };
   const handleRoute = () => {
     setView('route');
+  };
+   const handleAnalysis = () => {
+    setView('analysis');
+  };
+    const handleDashboard = () => {
+    setView('dashboard');
   };
   const handleDownload = async () => {
     try {
@@ -116,6 +125,20 @@ export default function Admin() {
         >
           Route
         </button>
+          <button
+          className="btn btn-warning mx-2"
+          onClick={handleAnalysis}
+          disabled={view === 'analysis'}
+        >
+          Analysis
+        </button>
+         <button
+          className="btn btn-warning mx-2"
+          onClick={handleDashboard}
+          disabled={view === 'dashboard'}
+        >
+          Dashboard
+        </button>
          <button
           className="btn btn-warning mx-2"
           onClick={handleJaakad}
@@ -132,6 +155,11 @@ export default function Admin() {
       {view === 'updatestock' && <UpdateStockForm />}
 {view === 'jaakad' && <JaakadFrontend/>}
 {view === 'route' && <RouteDashboard/>}
+{view === 'analysis' && <RetailerAnalysisPage/>}
+{view === 'dashboard' && <RealDashboard/>}
+
+
+
 
     </div>
   );
